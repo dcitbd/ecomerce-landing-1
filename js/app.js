@@ -1,7 +1,8 @@
 /**
  * Dream Cart BD - Core Storefront & Checkout Engine
- * Slogan: "you make."
+ * Slogan: "স্মার্ট অফিসের পূর্ণাঙ্গ সমাধান, আভিজাত্যে আপনার পাশে"
  * Location: Paduar Bazar Bishwa Road, Comilla
+ * Phones: 01581703822, 01818273838
  */
 
 // Initialize LocalStorage Database for Products & Orders
@@ -20,7 +21,6 @@ function initDatabase() {
     localStorage.setItem('dcb_cart', JSON.stringify([]));
   }
   if (!localStorage.getItem('dcb_visitors_base')) {
-    // Starting realistic visitor count
     localStorage.setItem('dcb_visitors_base', (1480 + Math.floor(Math.random() * 50)).toString());
   }
 }
@@ -48,27 +48,30 @@ document.addEventListener('DOMContentLoaded', () => {
   setupPaymentMethodSelector();
 });
 
-// Render Product Catalog
+// Render Product Catalog (Only Active Products)
 function renderProducts(items) {
   const container = document.getElementById('productsContainer');
   const countEl = document.getElementById('productCountBadge');
   if (!container) return;
 
+  // Filter only active products for storefront
+  const activeItems = items.filter(p => p.status !== 'inactive');
+
   if (countEl) {
-    countEl.innerText = `${items.length} টি পণ্য প্রদর্শিত হচ্ছে`;
+    countEl.innerText = `${activeItems.length} টি পণ্য প্রদর্শিত হচ্ছে`;
   }
 
-  if (items.length === 0) {
+  if (activeItems.length === 0) {
     container.innerHTML = `
       <div class="col-12 text-center py-5">
         <i class="fa-solid fa-box-open fa-3x text-muted mb-3"></i>
-        <h5 class="text-muted">কোনো পণ্য পাওয়া যায়নি!</h5>
+        <h5 class="text-muted">বর্তমানে কোনো পণ্য সক্রিয় নেই!</h5>
       </div>
     `;
     return;
   }
 
-  container.innerHTML = items.map(p => {
+  container.innerHTML = activeItems.map(p => {
     const mainImg = (p.images && p.images.length > 0) ? p.images[0] : 'https://images.unsplash.com/photo-1586075010923-2dd4570fb338?w=700&auto=format&fit=crop&q=80';
     const photoCount = p.images ? p.images.length : 1;
     const badgeHtml = p.badge ? `<span class="badge bg-danger product-badge">${p.badge}</span>` : '';
@@ -91,9 +94,6 @@ function renderProducts(items) {
               <span>${p.rating || '4.9'}</span>
               <span class="text-muted">(${p.reviews_count || '80'}+ রিভিউ)</span>
             </div>
-            <div class="price-range-badge">
-              মূল্য পরিসীমা: ৳${p.min_price} - ৳${p.max_price}
-            </div>
             <div class="product-price-row">
               <span class="current-price">৳${p.price}</span>
               ${p.original_price ? `<span class="original-price">৳${p.original_price}</span>` : ''}
@@ -105,9 +105,23 @@ function renderProducts(items) {
               <button class="btn-add-cart" onclick="addToCartQuick(${p.id})">
                 <i class="fa-solid fa-cart-plus"></i> কার্ট
               </button>
-              <a href="https://wa.me/8801581703822?text=${encodeURIComponent(`আসসালামু আলাইকুম Dream Cart BD, আমি '${p.name}' (মূল্য ৳${p.price}) পণ্যটি সরাসরি অর্ডার করতে আগ্রহী।`)}" target="_blank" class="btn-single-whatsapp">
-                <i class="fa-brands fa-whatsapp"></i> হোয়াটসঅ্যাপে অর্ডার
-              </a>
+              <div class="dropdown" style="grid-column: span 2;">
+                <button class="btn btn-success btn-sm w-100 dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <i class="fa-brands fa-whatsapp me-1"></i> হোয়াটসঅ্যাপে অর্ডার
+                </button>
+                <ul class="dropdown-menu w-100 shadow-sm">
+                  <li>
+                    <a class="dropdown-item small" href="https://wa.me/8801581703822?text=${encodeURIComponent(`আসসালামু আলাইকুম Dream Cart BD, আমি '${p.name}' (মূল্য ৳${p.price}) পণ্যটি অর্ডার করতে চাই।`)}" target="_blank">
+                      <i class="fa-brands fa-whatsapp text-success me-1"></i> নম্বর ১ (০১৫৮১ ৭০৩ ৮২২)
+                    </a>
+                  </li>
+                  <li>
+                    <a class="dropdown-item small" href="https://wa.me/8801818273838?text=${encodeURIComponent(`আসসালামু আলাইকুম Dream Cart BD, আমি '${p.name}' (মূল্য ৳${p.price}) পণ্যটি অর্ডার করতে চাই।`)}" target="_blank">
+                      <i class="fa-brands fa-whatsapp text-success me-1"></i> নম্বর ২ (০১৮১ ৮২৭ ৩৮৩৮)
+                    </a>
+                  </li>
+                </ul>
+              </div>
             </div>
           </div>
         </div>
@@ -164,7 +178,6 @@ function openProductModal(productId) {
   document.getElementById('modalProductCategory').innerText = product.category || 'অফিস ইকুইপমেন্ট';
   document.getElementById('modalProductPrice').innerText = `৳${product.price}`;
   document.getElementById('modalOriginalPrice').innerText = product.original_price ? `৳${product.original_price}` : '';
-  document.getElementById('modalPriceRange').innerText = `৳${product.min_price} - ৳${product.max_price}`;
   document.getElementById('modalProductDesc').innerText = product.description || 'উচ্চমানের অফিসিয়াল সামগ্রী।';
   document.getElementById('modalStockBadge').innerHTML = product.stock > 0 
     ? `<span class="badge bg-success-subtle text-success border border-success-subtle"><i class="fa-solid fa-check"></i> ইন-স্টক (${product.stock} টি উপলব্ধ)</span>` 
@@ -215,11 +228,19 @@ function openProductModal(productId) {
     document.getElementById('modalSizeWrapper').style.display = 'none';
   }
 
-  // Update WhatsApp link for this product
-  updateModalWhatsAppBtn();
+  // Update WhatsApp links for both numbers
+  updateModalWhatsAppBtns();
 
-  const modal = new bootstrap.Modal(document.getElementById('productViewModal'));
+  const modalEl = document.getElementById('productViewModal');
+  const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
   modal.show();
+}
+
+// Close Product Modal
+function closeProductModal() {
+  const modalEl = document.getElementById('productViewModal');
+  const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+  modal.hide();
 }
 
 function selectModalSlide(index) {
@@ -236,14 +257,14 @@ function selectColor(color, btn) {
   selectedColor = color;
   document.querySelectorAll('#modalColorContainer .variant-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  updateModalWhatsAppBtn();
+  updateModalWhatsAppBtns();
 }
 
 function selectSize(size, btn) {
   selectedSize = size;
   document.querySelectorAll('#modalSizeContainer .variant-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  updateModalWhatsAppBtn();
+  updateModalWhatsAppBtns();
 }
 
 function changeModalQty(delta) {
@@ -251,35 +272,33 @@ function changeModalQty(delta) {
   val = Math.max(1, val + delta);
   document.getElementById('modalQty').value = val;
   singleViewQty = val;
-  updateModalWhatsAppBtn();
+  updateModalWhatsAppBtns();
 }
 
-function updateModalWhatsAppBtn() {
+function updateModalWhatsAppBtns() {
   if (!currentActiveProduct) return;
   const msg = `আসসালামু আলাইকুম Dream Cart BD,
 আমি নিম্নলিখিত পণ্যটি অর্ডার করতে চাই:
 - পণ্যের নাম: ${currentActiveProduct.name}
 - ইউনিট মূল্য: ৳${currentActiveProduct.price}
 - পরিমাণ: ${singleViewQty}
-- সিলেক্টেড কালার: ${selectedColor || 'N/A'}
-- সিলেক্টেড সাইজ: ${selectedSize || 'N/A'}
-- মোট আনুমানিক দাম: ৳${currentActiveProduct.price * singleViewQty}
+- কালার: ${selectedColor || 'N/A'}
+- সাইজ: ${selectedSize || 'N/A'}
+- মোট দাম: ৳${currentActiveProduct.price * singleViewQty}
 
-দয়া করে আমার অর্ডারটি কনফার্ম করার জন্য যোগাযোগ করুন।`;
+দয়া করে অর্ডারটি দ্রুত প্রসেস করুন। ধন্যবাদ!`;
 
-  const btn = document.getElementById('modalWhatsAppBtn');
-  if (btn) {
-    btn.href = `https://wa.me/8801581703822?text=${encodeURIComponent(msg)}`;
-  }
+  const btn1 = document.getElementById('modalWhatsAppBtn1');
+  const btn2 = document.getElementById('modalWhatsAppBtn2');
+  if (btn1) btn1.href = `https://wa.me/8801581703822?text=${encodeURIComponent(msg)}`;
+  if (btn2) btn2.href = `https://wa.me/8801818273838?text=${encodeURIComponent(msg)}`;
 }
 
 // Cart Management
 function addToCartFromModal() {
   if (!currentActiveProduct) return;
   addToCart(currentActiveProduct, singleViewQty, selectedColor, selectedSize);
-  const modalEl = document.getElementById('productViewModal');
-  const modal = bootstrap.Modal.getInstance(modalEl);
-  if (modal) modal.hide();
+  closeProductModal();
   showToast('পণ্যটি সফলভাবে কার্টে যুক্ত হয়েছে!');
 }
 
@@ -429,9 +448,7 @@ function checkoutFromModal() {
     qty: singleViewQty
   };
 
-  const productModal = bootstrap.Modal.getInstance(document.getElementById('productViewModal'));
-  if (productModal) productModal.hide();
-
+  closeProductModal();
   openCheckoutModal(true);
 }
 
@@ -448,34 +465,67 @@ function checkoutFromCart() {
   openCheckoutModal(false);
 }
 
-// Checkout Modal Open & Calculation
+// Checkout Modal Open & Quantity Adjuster
 function openCheckoutModal(isDirect = false) {
   const checkoutItems = isDirect && directCheckoutItem ? [directCheckoutItem] : cart;
   if (checkoutItems.length === 0) return;
 
-  renderCheckoutSummary(checkoutItems);
+  renderCheckoutSummary();
   calculateOrderTotals();
 
-  const checkoutModal = new bootstrap.Modal(document.getElementById('checkoutModal'));
+  const checkoutModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('checkoutModal'));
   checkoutModal.show();
 }
 
-function renderCheckoutSummary(items) {
+// Render summary with interactive Quantity +/- steppers inside checkout form!
+function renderCheckoutSummary() {
   const summaryContainer = document.getElementById('checkoutItemsList');
   if (!summaryContainer) return;
 
-  summaryContainer.innerHTML = items.map(item => `
+  const items = directCheckoutItem ? [directCheckoutItem] : cart;
+
+  if (items.length === 0) {
+    summaryContainer.innerHTML = '<div class="text-muted small text-center py-2">কোনো পণ্য নির্বাচন করা হয়নি</div>';
+    return;
+  }
+
+  summaryContainer.innerHTML = items.map((item, idx) => `
     <div class="d-flex align-items-center justify-content-between py-2 border-bottom">
       <div class="d-flex align-items-center gap-2">
         <img src="${item.image}" style="width: 44px; height: 44px; object-fit: cover; border-radius: 6px;">
         <div>
-          <div class="fw-semibold small text-truncate" style="max-width: 170px;">${item.name}</div>
-          <small class="text-muted">${item.color || ''} ${item.size ? `(${item.size})` : ''} x ${item.qty}</small>
+          <div class="fw-semibold small text-truncate" style="max-width: 150px;">${item.name}</div>
+          <small class="text-muted">${item.color || ''} ${item.size ? `(${item.size})` : ''} - ৳${item.price}</small>
         </div>
       </div>
-      <div class="fw-bold">৳${item.price * item.qty}</div>
+      
+      <!-- Stepper inside Order Form -->
+      <div class="d-flex align-items-center gap-2">
+        <div class="btn-group btn-group-sm">
+          <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-2" onclick="changeCheckoutQty(${idx}, -1)">-</button>
+          <span class="btn btn-light btn-sm py-0 px-2 disabled fw-bold text-dark">${item.qty}</span>
+          <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-2" onclick="changeCheckoutQty(${idx}, 1)">+</button>
+        </div>
+        <div class="fw-bold ms-1" style="min-width: 55px; text-align: right;">৳${item.price * item.qty}</div>
+      </div>
     </div>
   `).join('');
+}
+
+function changeCheckoutQty(index, delta) {
+  if (directCheckoutItem) {
+    directCheckoutItem.qty = Math.max(1, directCheckoutItem.qty + delta);
+  } else if (cart[index]) {
+    cart[index].qty += delta;
+    if (cart[index].qty <= 0) {
+      cart.splice(index, 1);
+    }
+    saveCart();
+    updateCartBadge();
+    renderCartDrawer();
+  }
+  renderCheckoutSummary();
+  calculateOrderTotals();
 }
 
 // AI Address Auto-Detection Engine
@@ -491,7 +541,7 @@ function setupAddressAIEngine() {
       return;
     }
 
-    // Comilla keywords (Bangla + English)
+    // Comilla keywords
     const comillaKeywords = [
       'comilla', 'cumilla', 'কুমিল্লা', 'পদুয়ার বাজার', 'পদুয়া বাজার', 'বিশ্বরোড', 'বিশ্ব রোড',
       'টমছম ব্রিজ', 'কান্দিরপাড়', 'কান্দিরপাড়', 'শাসনগাছা', 'বাগিচাগাঁও', 'ঝাউতলা', 'চৌদ্দগ্রাম',
@@ -500,7 +550,7 @@ function setupAddressAIEngine() {
       'kandirpar', 'laksham', 'chauddagram', 'barura'
     ];
 
-    // Dhaka keywords (Bangla + English)
+    // Dhaka keywords
     const dhakaKeywords = [
       'dhaka', 'ঢাকা', 'মিরপুর', 'উত্তরা', 'ধানমন্ডি', 'গুলশান', 'বনানী', 'মোহাম্মদপুর',
       'মতিঝিল', 'যাত্রাবাড়ী', 'যাত্রাবাড়ী', 'বাড্ডা', 'খিলগাঁও', 'মালিবাগ', 'রামপুরা',
@@ -553,7 +603,7 @@ function setupAddressAIEngine() {
   });
 }
 
-// Payment Methods & 5% Online Discount Engine
+// Payment Methods & 4% Online Discount Engine
 function setupPaymentMethodSelector() {
   document.querySelectorAll('.payment-method-box').forEach(box => {
     box.addEventListener('click', function() {
@@ -618,24 +668,27 @@ function togglePaymentDetailsBox(method) {
   }
 }
 
-// Calculate Order Totals with 5% Online Payment Discount & Delivery Fee
+// Calculate Order Totals with 4% Online Payment Discount & FREE DELIVERY over 2000 Tk
 function calculateOrderTotals() {
   const items = directCheckoutItem ? [directCheckoutItem] : cart;
   const subtotal = items.reduce((sum, item) => sum + (item.price * item.qty), 0);
 
-  // Delivery Charge
-  let deliveryFee = 90;
+  // Delivery Charge calculation (FREE if subtotal > 2000 Tk)
+  let standardFee = 90;
   if (selectedDeliveryArea === 'dhaka') {
-    deliveryFee = 110;
+    standardFee = 110;
   } else if (selectedDeliveryArea === 'outside') {
-    deliveryFee = 135;
+    standardFee = 135;
   }
 
-  // 5% Online Payment Discount calculation
+  const isFreeDelivery = subtotal >= 2000;
+  let deliveryFee = isFreeDelivery ? 0 : standardFee;
+
+  // 4% Online Payment Discount calculation (Automated)
   let discountAmount = 0;
   const isOnline = selectedPaymentMethod !== 'cod';
   if (isOnline) {
-    discountAmount = Math.round(subtotal * 0.05);
+    discountAmount = Math.round(subtotal * 0.04);
   }
 
   const grandTotal = Math.max(0, subtotal - discountAmount + deliveryFee);
@@ -646,27 +699,44 @@ function calculateOrderTotals() {
   const discountRowEl = document.getElementById('checkoutDiscountRow');
   const discountAmountEl = document.getElementById('checkoutDiscountAmount');
   const grandTotalEl = document.getElementById('checkoutGrandTotal');
-  const discountNoticeBadge = document.getElementById('onlineDiscountNoticeBadge');
+  const freeDeliveryBadge = document.getElementById('freeDeliveryNoticeBadge');
 
   if (subtotalEl) subtotalEl.innerText = `৳${subtotal}`;
-  if (deliveryFeeEl) deliveryFeeEl.innerText = `৳${deliveryFee}`;
+  
+  if (deliveryFeeEl) {
+    if (isFreeDelivery) {
+      deliveryFeeEl.innerHTML = `<span class="badge bg-success">ফ্রি ডেলিভারি (৳০)</span> <span class="text-decoration-line-through text-muted small">৳${standardFee}</span>`;
+    } else {
+      deliveryFeeEl.innerText = `৳${deliveryFee}`;
+    }
+  }
+
+  if (freeDeliveryBadge) {
+    if (isFreeDelivery) {
+      freeDeliveryBadge.style.display = 'block';
+      freeDeliveryBadge.className = 'alert alert-success py-2 small mb-3 border-0 bg-success-subtle text-success-emphasis rounded-3';
+      freeDeliveryBadge.innerHTML = '<i class="fa-solid fa-gift me-1"></i> <strong>অভিনন্দন!</strong> ২,০০০ টাকার বেশি কেনাকাটায় আপনার জন্য সারাদেশে ডেলিভারি চার্জ সম্পূর্ণ ফ্রি!';
+    } else if (subtotal > 0 && subtotal < 2000) {
+      freeDeliveryBadge.style.display = 'block';
+      freeDeliveryBadge.className = 'alert alert-info py-2 small mb-3 border-0 bg-info-subtle text-info-emphasis rounded-3';
+      freeDeliveryBadge.innerHTML = `<i class="fa-solid fa-truck-fast me-1"></i> আর মাত্র <strong>৳${2000 - subtotal}</strong> টাকার পণ্য কিনলেই ডেলিভারি সম্পূর্ণ ফ্রি!`;
+    } else {
+      freeDeliveryBadge.style.display = 'none';
+    }
+  }
 
   if (discountRowEl) {
     if (isOnline) {
       discountRowEl.style.display = 'flex';
-      discountAmountEl.innerText = `-৳${discountAmount} (৫%)`;
+      discountAmountEl.innerText = `-৳${discountAmount} (৪%)`;
     } else {
       discountRowEl.style.display = 'none';
     }
   }
 
-  if (discountNoticeBadge) {
-    discountNoticeBadge.style.display = isOnline ? 'block' : 'none';
-  }
-
   if (grandTotalEl) grandTotalEl.innerText = `৳${grandTotal}`;
 
-  return { subtotal, deliveryFee, discountAmount, grandTotal, items };
+  return { subtotal, deliveryFee, standardFee, isFreeDelivery, discountAmount, grandTotal, items };
 }
 
 // Place Order Form Submission
@@ -693,7 +763,7 @@ function handleOrderSubmit(e) {
     return;
   }
 
-  const { subtotal, deliveryFee, discountAmount, grandTotal, items } = calculateOrderTotals();
+  const { subtotal, deliveryFee, isFreeDelivery, discountAmount, grandTotal, items } = calculateOrderTotals();
   if (items.length === 0) {
     showToast('অর্ডারে কোনো পণ্য নেই!', 'danger');
     return;
@@ -717,8 +787,9 @@ function handleOrderSubmit(e) {
       address: address
     },
     deliveryArea: selectedDeliveryArea,
-    deliveryAreaLabel: selectedDeliveryArea === 'comilla' ? 'কুমিল্লার ভিতর' : (selectedDeliveryArea === 'dhaka' ? 'ঢাকার ভিতরে' : 'কুমিল্লা ও ঢাকার বাইরে'),
+    deliveryAreaLabel: isFreeDelivery ? 'সারা দেশে ফ্রি ডেলিভারি' : (selectedDeliveryArea === 'comilla' ? 'কুমিল্লার ভিতর' : (selectedDeliveryArea === 'dhaka' ? 'ঢাকার ভিতরে' : 'কুমিল্লা ও ঢাকার বাইরে')),
     deliveryFee: deliveryFee,
+    isFreeDelivery: isFreeDelivery,
     paymentMethod: selectedPaymentMethod,
     paymentDetails: {
       senderNumber: senderNumber,
@@ -729,7 +800,7 @@ function handleOrderSubmit(e) {
     discountAmount: discountAmount,
     grandTotal: grandTotal,
     notes: notes,
-    status: 'Pending' // Pending, Confirmed, Shipped, Delivered, Cancelled
+    status: 'Pending'
   };
 
   // Save to LocalStorage
@@ -767,11 +838,14 @@ function showOrderSuccessModal(order) {
   document.getElementById('receiptPaymentMethod').innerText = getPaymentMethodDisplayName(order.paymentMethod);
   document.getElementById('receiptGrandTotal').innerText = `৳${order.grandTotal}`;
 
+  let extraBadges = '';
   if (order.discountAmount > 0) {
-    document.getElementById('receiptDiscountInfo').innerHTML = `<span class="badge bg-success">৫% অনলাইন ছাড়: ৳${order.discountAmount} সেভ হয়েছে!</span>`;
-  } else {
-    document.getElementById('receiptDiscountInfo').innerHTML = '';
+    extraBadges += `<span class="badge bg-success me-1">৪% অনলাইন ছাড়: ৳${order.discountAmount} সেভ</span>`;
   }
+  if (order.isFreeDelivery) {
+    extraBadges += `<span class="badge bg-info text-dark">ফ্রি ডেলিভারি প্রযোজ্য</span>`;
+  }
+  document.getElementById('receiptDiscountInfo').innerHTML = extraBadges;
 
   // Items table
   const itemsContainer = document.getElementById('receiptItemsTable');
@@ -783,7 +857,7 @@ function showOrderSuccessModal(order) {
     </tr>
   `).join('');
 
-  // Prepare WhatsApp confirmation link for customer
+  // Prepare WhatsApp confirmation links for BOTH numbers
   const whatsappMsg = `আসসালামু আলাইকুম Dream Cart BD,
 আমি একটি নতুন অর্ডার প্লেস করেছি।
 অর্ডার আইডি: ${order.orderId}
@@ -791,16 +865,16 @@ function showOrderSuccessModal(order) {
 ফোন: ${order.customer.phone}
 ঠিকানা: ${order.customer.address}
 পেমেন্ট মেথড: ${getPaymentMethodDisplayName(order.paymentMethod)} ${order.paymentDetails.trxId ? `(TrxID: ${order.paymentDetails.trxId})` : ''}
-মোট বিল: ৳${order.grandTotal}
+মোট প্রদেয় বিল: ৳${order.grandTotal}
 
-দয়া করে অর্ডারটি দ্রুত প্রসেস করুন। ধন্যবাদ!`;
+দয়া করে অর্ডারটি কনফার্ম করুন। ধন্যবাদ!`;
 
-  const waBtn = document.getElementById('receiptWhatsAppBtn');
-  if (waBtn) {
-    waBtn.href = `https://wa.me/8801581703822?text=${encodeURIComponent(whatsappMsg)}`;
-  }
+  const waBtn1 = document.getElementById('receiptWhatsAppBtn1');
+  const waBtn2 = document.getElementById('receiptWhatsAppBtn2');
+  if (waBtn1) waBtn1.href = `https://wa.me/8801581703822?text=${encodeURIComponent(whatsappMsg)}`;
+  if (waBtn2) waBtn2.href = `https://wa.me/8801818273838?text=${encodeURIComponent(whatsappMsg)}`;
 
-  // Customer Mail After Order (mailto link or simulated dispatch)
+  // Customer Mail After Order
   const mailBtn = document.getElementById('receiptEmailBtn');
   if (mailBtn) {
     const emailSubject = `Dream Cart BD - Order Confirmation #${order.orderId}`;
@@ -811,7 +885,7 @@ Dream Cart BD থেকে কেনাকাটা করার জন্য �
 অর্ডার আইডি: ${order.orderId}
 পণ্য সংখ্যা: ${order.items.length} টি
 সাবটোটাল: ৳${order.subtotal}
-ছাড়: ৳${order.discountAmount}
+অনলাইন ছাড়: ৳${order.discountAmount}
 ডেলিভারি চার্জ: ৳${order.deliveryFee} (${order.deliveryAreaLabel})
 সর্বমোট প্রদেয় বিল: ৳${order.grandTotal}
 পেমেন্ট মেথড: ${getPaymentMethodDisplayName(order.paymentMethod)}
@@ -830,7 +904,7 @@ ${order.customer.address}
     mailBtn.style.display = 'inline-flex';
   }
 
-  const successModal = new bootstrap.Modal(document.getElementById('orderSuccessModal'));
+  const successModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('orderSuccessModal'));
   successModal.show();
 }
 
@@ -854,7 +928,6 @@ function setupOfferCountdown() {
 
   function updateTimer() {
     const now = new Date();
-    // Midnight countdown
     const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
     const diffMs = tomorrow - now;
 
@@ -878,7 +951,6 @@ function setupVisitorCounter() {
   if (!visitorCountEl) return;
 
   let baseVisitors = parseInt(localStorage.getItem('dcb_visitors_base') || '1480');
-  // Increments gradually
   baseVisitors += 1;
   localStorage.setItem('dcb_visitors_base', baseVisitors.toString());
 
@@ -887,7 +959,6 @@ function setupVisitorCounter() {
     activeNowEl.innerText = (18 + Math.floor(Math.random() * 8)).toString();
   }
 
-  // Subtle simulated tick every 15-30 seconds
   setInterval(() => {
     if (Math.random() > 0.4) {
       baseVisitors += 1;

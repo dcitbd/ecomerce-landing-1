@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>এডমিন প্যানেল - Dream Cart BD</title>
+  <title>এডমিন কন্ট্রোল প্যানেল - Dream Cart BD</title>
   
   <!-- Bootstrap 5 CSS -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
@@ -15,54 +15,54 @@
 <body class="bg-light">
 
   <!-- Admin Login Gate -->
-  <div id="adminLoginGate" class="d-flex align-items-center justify-content-center min-vh-100 p-3" style="display: none;">
-    <div class="card shadow-lg border-0 rounded-4 p-4 text-center" style="max-width: 400px; width: 100%;">
-      <div class="brand-icon-box mx-auto mb-3" style="width: 60px; height: 60px; font-size: 1.8rem;">
-        <i class="fa-solid fa-lock"></i>
-      </div>
+  <div id="adminLoginGate" class="min-vh-100 d-flex align-items-center justify-content-center p-3">
+    <div class="card shadow-lg border-0 rounded-4 p-4 text-center" style="max-width: 420px; width: 100%;">
+      <img src="https://pictures-bangladesh.jijistatic.com/2033199_MjAwLTIwMC03Nzk0Y2Y2Yzkx.jpg" alt="Dream Cart BD Logo" class="mx-auto mb-3 brand-logo-img" style="width: 70px; height: 70px;">
       <h4 class="fw-bold mb-1">এডমিন কন্ট্রোল প্যানেল</h4>
-      <p class="text-muted small mb-4">Dream Cart BD — সুরক্ষিত পোর্টাল</p>
+      <p class="text-muted small mb-4">Dream Cart BD — সুরক্ষিত ম্যানেজমেন্ট সিস্টেম</p>
 
       <form onsubmit="handleAdminLogin(event)">
         <div class="mb-3 text-start">
-          <label class="form-label small fw-semibold">সিকিউরিটি পাসকোড লিখুন:</label>
+          <label class="form-label small fw-semibold">এডমিন পাসওয়ার্ড লিখুন:</label>
           <div class="input-group">
-            <span class="input-group-text"><i class="fa-solid fa-key text-muted"></i></span>
-            <input type="password" id="adminPinInput" class="form-control" placeholder="পাসকোড দিন (admin123)" required>
+            <span class="input-group-text bg-light"><i class="fa-solid fa-key text-muted"></i></span>
+            <input type="password" id="adminPinInput" class="form-control" placeholder="পাসওয়ার্ড লিখুন..." required>
           </div>
-          <div id="adminLoginError" class="text-danger small mt-1"></div>
+          <div id="adminLoginError" class="text-danger small mt-2 fw-semibold"></div>
         </div>
-        <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold rounded-pill">
+        <button type="submit" class="btn btn-primary w-100 py-2 fw-bold rounded-pill shadow-sm">
           <i class="fa-solid fa-right-to-bracket me-1"></i> লগইন করুন
         </button>
       </form>
 
       <div class="mt-4 pt-3 border-top">
         <a href="index.html" class="text-decoration-none small text-muted">
-          <i class="fa-solid fa-arrow-left me-1"></i> প্রধান ওয়েবসাইটে ফিরে যান
+          <i class="fa-solid fa-house me-1"></i> মূল ওয়েবসাইটে ফিরে যান
         </a>
       </div>
     </div>
   </div>
 
   <!-- Admin Dashboard Content -->
-  <div id="adminDashboardContent" style="display: none;">
+  <div id="adminDashboardContent" class="d-none">
 
-    <!-- Top Admin Bar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top py-2">
+    <!-- Top Admin Navbar with Official Logo -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top py-2 shadow-sm">
       <div class="container-fluid px-lg-4">
         <a class="navbar-brand d-flex align-items-center gap-2" href="admin.html">
-          <i class="fa-solid fa-briefcase text-info"></i>
-          <span class="fw-bold">Dream Cart BD Admin</span>
-          <span class="badge bg-secondary ms-1">v2.0 Final</span>
+          <img src="https://pictures-bangladesh.jijistatic.com/2033199_MjAwLTIwMC03Nzk0Y2Y2Yzkx.jpg" alt="Dream Cart BD" style="width: 38px; height: 38px; border-radius: 8px; object-fit: cover;">
+          <div>
+            <div class="fw-bold fs-6">Dream Cart BD Admin</div>
+            <div class="small text-muted" style="font-size: 11px;">স্মার্ট অফিসের পূর্ণাঙ্গ সমাধান, আভিজাত্যে আপনার পাশে</div>
+          </div>
         </a>
 
         <div class="d-flex align-items-center gap-2">
-          <a href="index.html" target="_blank" class="btn btn-sm btn-outline-light rounded-pill">
-            <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> লাইভ সাইট দেখুন
+          <a href="index.html" target="_blank" class="btn btn-sm btn-outline-light rounded-pill px-3">
+            <i class="fa-solid fa-store me-1"></i> শোরুম ভিজিট
           </a>
-          <button type="button" class="btn btn-sm btn-danger rounded-pill" onclick="handleAdminLogout()">
-            <i class="fa-solid fa-right-from-bracket me-1"></i> লগআউট
+          <button type="button" class="btn btn-sm btn-danger rounded-pill px-3" onclick="handleAdminLogout()">
+            <i class="fa-solid fa-power-off me-1"></i> লগআউট
           </button>
         </div>
       </div>
@@ -70,57 +70,60 @@
 
     <div class="container-fluid px-lg-4 py-4">
 
-      <!-- Analytics Metric Cards -->
-      <div class="row g-3 mb-4">
-        <div class="col-sm-6 col-xl-3">
-          <div class="admin-card d-flex align-items-center justify-content-between">
-            <div>
-              <span class="text-muted small fw-semibold">সর্বমোট অর্ডার</span>
-              <h3 class="fw-bold my-1 text-dark" id="statTotalOrders">0</h3>
-              <small class="text-primary"><i class="fa-solid fa-chart-line"></i> আজ পর্যন্ত রেকর্ড</small>
-            </div>
-            <div class="stat-icon-wrap bg-primary-subtle text-primary">
-              <i class="fa-solid fa-cart-shopping"></i>
-            </div>
+      <!-- ==================== ORDER STATUS COUNTERS (ON-CLICK FILTER) ==================== -->
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h6 class="fw-bold text-dark mb-0"><i class="fa-solid fa-chart-pie text-primary me-2"></i> অর্ডার স্ট্যাটাস ও ফিল্টার ড্যাশবোর্ড (ক্লিক করে সরাসরি ফিল্টার করুন):</h6>
+        <span class="badge bg-light text-dark border">মোট রেভিনিউ: <strong id="statTotalRevenue" class="text-success">৳0</strong></span>
+      </div>
+
+      <div class="row g-2 mb-4">
+        <div class="col-6 col-md-3 col-xl">
+          <div class="admin-card order-stat-card active-filter text-center py-2 px-1" id="orderCard_all" onclick="filterOrdersByStatus('all')" title="সকল অর্ডার দেখুন">
+            <span class="text-muted small fw-semibold d-block">সর্বমোট অর্ডার</span>
+            <h4 class="fw-bold my-1 text-dark" id="statTotalOrders">0</h4>
+            <span class="badge bg-secondary-subtle text-secondary" style="font-size: 10px;">সকল তালিকা</span>
           </div>
         </div>
-
-        <div class="col-sm-6 col-xl-3">
-          <div class="admin-card d-flex align-items-center justify-content-between">
-            <div>
-              <span class="text-muted small fw-semibold">মোট আয় (রেভিনিউ)</span>
-              <h3 class="fw-bold my-1 text-success" id="statTotalRevenue">৳0</h3>
-              <small class="text-success"><i class="fa-solid fa-money-bill-trend-up"></i> ভ্যালিড বিক্রয়</small>
-            </div>
-            <div class="stat-icon-wrap bg-success-subtle text-success">
-              <i class="fa-solid fa-sack-dollar"></i>
-            </div>
+        <div class="col-6 col-md-3 col-xl">
+          <div class="admin-card order-stat-card text-center py-2 px-1" id="orderCard_Pending" onclick="filterOrdersByStatus('Pending')" title="অপেক্ষমান অর্ডার ফিল্টার করুন">
+            <span class="text-muted small fw-semibold d-block">অপেক্ষমান</span>
+            <h4 class="fw-bold my-1 text-warning" id="statPendingOrders">0</h4>
+            <span class="badge bg-warning-subtle text-warning" style="font-size: 10px;">Pending</span>
           </div>
         </div>
-
-        <div class="col-sm-6 col-xl-3">
-          <div class="admin-card d-flex align-items-center justify-content-between">
-            <div>
-              <span class="text-muted small fw-semibold">অপেক্ষমান অর্ডার (Pending)</span>
-              <h3 class="fw-bold my-1 text-warning" id="statPendingOrders">0</h3>
-              <small class="text-warning"><i class="fa-solid fa-clock"></i> দ্রুত প্রসেসিং আবশ্যক</small>
-            </div>
-            <div class="stat-icon-wrap bg-warning-subtle text-warning">
-              <i class="fa-solid fa-hourglass-half"></i>
-            </div>
+        <div class="col-6 col-md-3 col-xl">
+          <div class="admin-card order-stat-card text-center py-2 px-1" id="orderCard_Confirmed" onclick="filterOrdersByStatus('Confirmed')" title="কনফার্মড অর্ডার ফিল্টার করুন">
+            <span class="text-muted small fw-semibold d-block">কনফার্মড</span>
+            <h4 class="fw-bold my-1 text-info" id="statConfirmedOrders">0</h4>
+            <span class="badge bg-info-subtle text-info" style="font-size: 10px;">Confirmed</span>
           </div>
         </div>
-
-        <div class="col-sm-6 col-xl-3">
-          <div class="admin-card d-flex align-items-center justify-content-between">
-            <div>
-              <span class="text-muted small fw-semibold">মোট পণ্য ও লাইভ ভিজিটর</span>
-              <h3 class="fw-bold my-1 text-info"><span id="statTotalProducts">২০</span> টি / <span id="statTotalVisitors">১,৫০০</span></h3>
-              <small class="text-muted"><i class="fa-solid fa-users"></i> স্টোর ভিজিট ট্র্যাকিং</small>
-            </div>
-            <div class="stat-icon-wrap bg-info-subtle text-info">
-              <i class="fa-solid fa-boxes-stacked"></i>
-            </div>
+        <div class="col-6 col-md-3 col-xl">
+          <div class="admin-card order-stat-card text-center py-2 px-1" id="orderCard_Processing" onclick="filterOrdersByStatus('Processing')" title="প্রসেসিং অর্ডার ফিল্টার করুন">
+            <span class="text-muted small fw-semibold d-block">প্রসেসিং</span>
+            <h4 class="fw-bold my-1 text-primary" id="statProcessingOrders">0</h4>
+            <span class="badge bg-primary-subtle text-primary" style="font-size: 10px;">Processing</span>
+          </div>
+        </div>
+        <div class="col-6 col-md-3 col-xl">
+          <div class="admin-card order-stat-card text-center py-2 px-1" id="orderCard_Shipped" onclick="filterOrdersByStatus('Shipped')" title="ডেলিভারির পথে">
+            <span class="text-muted small fw-semibold d-block">ডেলিভারির পথে</span>
+            <h4 class="fw-bold my-1 text-secondary" id="statShippedOrders">0</h4>
+            <span class="badge bg-secondary-subtle text-secondary" style="font-size: 10px;">Shipped</span>
+          </div>
+        </div>
+        <div class="col-6 col-md-3 col-xl">
+          <div class="admin-card order-stat-card text-center py-2 px-1" id="orderCard_Delivered" onclick="filterOrdersByStatus('Delivered')" title="সফল ডেলিভারি">
+            <span class="text-muted small fw-semibold d-block">ডেলিভার্ড</span>
+            <h4 class="fw-bold my-1 text-success" id="statDeliveredOrders">0</h4>
+            <span class="badge bg-success-subtle text-success" style="font-size: 10px;">Delivered</span>
+          </div>
+        </div>
+        <div class="col-6 col-md-3 col-xl">
+          <div class="admin-card order-stat-card text-center py-2 px-1" id="orderCard_Cancelled" onclick="filterOrdersByStatus('Cancelled')" title="বাতিলকৃত অর্ডার">
+            <span class="text-muted small fw-semibold d-block">বাতিল</span>
+            <h4 class="fw-bold my-1 text-danger" id="statCancelledOrders">0</h4>
+            <span class="badge bg-danger-subtle text-danger" style="font-size: 10px;">Cancelled</span>
           </div>
         </div>
       </div>
@@ -128,17 +131,21 @@
       <!-- Main Navigation Tabs: Orders vs Products -->
       <ul class="nav nav-pills mb-4 gap-2" id="adminTabs" role="tablist">
         <li class="nav-item" role="presentation">
-          <button class="nav-link active rounded-pill px-4 fw-semibold shadow-sm" id="orders-tab" data-bs-toggle="pill" data-bs-target="#ordersPane" type="button" role="tab">
-            <i class="fa-solid fa-clipboard-list me-1"></i> অর্ডার ম্যানেজমেন্ট (Order Management)
+          <button class="nav-link active rounded-pill px-4 py-2 fw-semibold shadow-sm" id="orders-tab" data-bs-toggle="pill" data-bs-target="#ordersPane" type="button" role="tab">
+            <i class="fa-solid fa-truck-fast me-1"></i> অর্ডার ম্যানেজমেন্ট ও ভাউচার প্রিন্ট
           </button>
         </li>
         <li class="nav-item" role="presentation">
-          <button class="nav-link rounded-pill px-4 fw-semibold shadow-sm" id="products-tab" data-bs-toggle="pill" data-bs-target="#productsPane" type="button" role="tab">
-            <i class="fa-solid fa-box-archive me-1"></i> পণ্য ম্যানেজমেন্ট (Product Management)
+          <button class="nav-link rounded-pill px-4 py-2 fw-semibold shadow-sm" id="products-tab" data-bs-toggle="pill" data-bs-target="#productsPane" type="button" role="tab">
+            <i class="fa-solid fa-boxes-stacked me-1"></i> পণ্য ক্যাটালগ ও ইনভেন্টরি ম্যানেজমেন্ট
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link rounded-pill px-4 py-2 fw-semibold shadow-sm" id="brands-tab" data-bs-toggle="pill" data-bs-target="#brandsPane" type="button" role="tab">
+            <i class="fa-solid fa-tags me-1 text-warning"></i> ব্র্যান্ড ম্যানেজমেন্ট (<span id="totalBrandsCount">0</span>)
           </button>
         </li>
       </ul>
-
       <div class="tab-content" id="adminTabsContent">
         
         <!-- ==================== TAB 1: ORDER MANAGEMENT ==================== -->
@@ -147,14 +154,14 @@
             
             <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
               <div>
-                <h5 class="fw-bold mb-1"><i class="fa-solid fa-truck-ramp-box text-primary me-2"></i> গ্রাহকদের অর্ডার তালিকা</h5>
-                <p class="text-muted small mb-0">অর্ডার ভেরিফিকেশন, স্ট্যাটাস পরিবর্তন ও চালান প্রিন্ট করুন</p>
+                <h5 class="fw-bold mb-1 text-dark"><i class="fa-solid fa-receipt text-primary me-2"></i> গ্রাহকদের অর্ডার ও ডেলিভারি তালিকা</h5>
+                <p class="text-muted small mb-0">অর্ডার লিস্ট থেকেই সরাসরি পার্সেল ভাউচার ও চালান প্রিন্ট করে পণ্য পাঠিয়ে দিতে পারেন</p>
               </div>
               <div class="d-flex gap-2">
-                <button type="button" class="btn btn-outline-success btn-sm rounded-pill fw-semibold" onclick="exportOrdersCSV()">
-                  <i class="fa-solid fa-file-csv me-1"></i> CSV এক্সপোর্ট
+                <button type="button" class="btn btn-success btn-sm rounded-pill fw-semibold shadow-sm" onclick="exportOrdersCSV()">
+                  <i class="fa-solid fa-download me-1"></i> অর্ডার CSV ডাউনলোড
                 </button>
-                <button type="button" class="btn btn-outline-primary btn-sm rounded-pill fw-semibold" onclick="renderAdminOrders()">
+                <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill fw-semibold" onclick="renderAdminOrders()">
                   <i class="fa-solid fa-arrows-rotate me-1"></i> রিফ্রেশ
                 </button>
               </div>
@@ -164,13 +171,13 @@
             <div class="row g-3 mb-3">
               <div class="col-md-6 col-lg-5">
                 <div class="input-group input-group-sm">
-                  <span class="input-group-text bg-light"><i class="fa-solid fa-search"></i></span>
-                  <input type="text" id="adminOrderSearch" class="form-control" placeholder="অর্ডার আইডি, ফোন বা নাম দিয়ে খুঁজুন...">
+                  <span class="input-group-text bg-light"><i class="fa-solid fa-search text-muted"></i></span>
+                  <input type="text" id="adminOrderSearch" class="form-control" placeholder="অর্ডার আইডি, ফোন নম্বর, ঠিকানা বা নাম দিয়ে সার্চ করুন...">
                 </div>
               </div>
               <div class="col-md-6 col-lg-3">
                 <select id="adminOrderStatusFilter" class="form-select form-select-sm">
-                  <option value="all">সব স্ট্যাটাস</option>
+                  <option value="all">সকল অর্ডার দেখুন</option>
                   <option value="Pending">অপেক্ষমান (Pending)</option>
                   <option value="Confirmed">কনফার্মড (Confirmed)</option>
                   <option value="Processing">প্রসেসিং (Processing)</option>
@@ -207,18 +214,71 @@
 
         <!-- ==================== TAB 2: PRODUCT MANAGEMENT ==================== -->
         <div class="tab-pane fade" id="productsPane" role="tabpanel">
+          
+          <!-- Product Metric Cards (Active, Inactive, Low Stock Filters) -->
+          <div class="row g-3 mb-3">
+            <div class="col-6 col-md-3">
+              <div class="admin-card product-stat-card active-filter d-flex align-items-center justify-content-between p-3" id="prodCard_all" onclick="filterProductsByMetric('all')" title="সকল পণ্য দেখুন">
+                <div>
+                  <span class="text-muted small fw-semibold">সর্বমোট পণ্য</span>
+                  <h4 class="fw-bold my-1 text-dark" id="statProdTotal">0</h4>
+                  <small class="text-primary"><i class="fa-solid fa-hand-pointer"></i> সব তালিকা</small>
+                </div>
+                <div class="stat-icon-wrap bg-primary-subtle text-primary">
+                  <i class="fa-solid fa-boxes-stacked"></i>
+                </div>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="admin-card product-stat-card d-flex align-items-center justify-content-between p-3" id="prodCard_active" onclick="filterProductsByMetric('active')" title="সক্রিয় পণ্য ফিল্টার করুন">
+                <div>
+                  <span class="text-muted small fw-semibold">সক্রিয় পণ্য</span>
+                  <h4 class="fw-bold my-1 text-success" id="statProdActive">0</h4>
+                  <small class="text-success"><i class="fa-solid fa-circle-check"></i> স্টোরে দৃশ্যমান</small>
+                </div>
+                <div class="stat-icon-wrap bg-success-subtle text-success">
+                  <i class="fa-solid fa-eye"></i>
+                </div>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="admin-card product-stat-card d-flex align-items-center justify-content-between p-3" id="prodCard_inactive" onclick="filterProductsByMetric('inactive')" title="নিষ্ক্রিয়/ডি-একটিভ পণ্য ফিল্টার করুন">
+                <div>
+                  <span class="text-muted small fw-semibold">ডি-একটিভ পণ্য</span>
+                  <h4 class="fw-bold my-1 text-secondary" id="statProdInactive">0</h4>
+                  <small class="text-secondary"><i class="fa-solid fa-eye-slash"></i> লুকানো পণ্য</small>
+                </div>
+                <div class="stat-icon-wrap bg-secondary-subtle text-secondary">
+                  <i class="fa-solid fa-pause"></i>
+                </div>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="admin-card product-stat-card d-flex align-items-center justify-content-between p-3" id="prodCard_low_stock" onclick="filterProductsByMetric('low_stock')" title="লো স্টক পণ্য ফিল্টার করুন">
+                <div>
+                  <span class="text-muted small fw-semibold">লো স্টক (≤ ১০)</span>
+                  <h4 class="fw-bold my-1 text-danger" id="statProdLowStock">0</h4>
+                  <small class="text-danger"><i class="fa-solid fa-triangle-exclamation"></i> স্টক শেষ প্রায়</small>
+                </div>
+                <div class="stat-icon-wrap bg-danger-subtle text-danger">
+                  <i class="fa-solid fa-layer-group"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div class="card border-0 shadow-sm rounded-4 p-4">
             
             <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
               <div>
-                <h5 class="fw-bold mb-1"><i class="fa-solid fa-boxes-packing text-primary me-2"></i> পণ্য তালিকা ও ইনভেন্টরি</h5>
-                <p class="text-muted small mb-0">নতুন পণ্য যোগ, তথ্য সম্পাদনা এবং ছবি ও মূল্য পরিচালনা করুন</p>
+                <h5 class="fw-bold mb-1 text-dark"><i class="fa-solid fa-boxes-packing text-primary me-2"></i> পণ্য তালিকা ও ইনভেন্টরি</h5>
+                <p class="text-muted small mb-0">নতুন পণ্য যোগ, এডিট, ১-ক্লিকে সক্রিয়/নিষ্ক্রিয় ও স্টক পরিচালনা করুন</p>
               </div>
               <div class="d-flex gap-2">
-                <button type="button" class="btn btn-warning btn-sm rounded-pill fw-bold text-dark" onclick="openAddProductModal()">
+                <button type="button" class="btn btn-warning btn-sm rounded-pill fw-bold text-dark shadow-sm" onclick="openAddProductModal()">
                   <i class="fa-solid fa-plus me-1"></i> নতুন পণ্য যোগ করুন
                 </button>
-                <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill" onclick="resetDefaultProducts()" title="মূল ২০টি পণ্যে রিস্টোর করুন">
+                <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill" onclick="resetDefaultProducts()" title="মূল পণ্যে রিস্টোর করুন">
                   <i class="fa-solid fa-rotate-left me-1"></i> ডিফল্ট রিস্টোর
                 </button>
               </div>
@@ -228,7 +288,7 @@
             <div class="row g-3 mb-3">
               <div class="col-md-6 col-lg-4">
                 <div class="input-group input-group-sm">
-                  <span class="input-group-text bg-light"><i class="fa-solid fa-search"></i></span>
+                  <span class="input-group-text bg-light"><i class="fa-solid fa-search text-muted"></i></span>
                   <input type="text" id="adminProductSearch" class="form-control" placeholder="পণ্যের নাম বা ক্যাটাগরি দিয়ে খুঁজুন...">
                 </div>
               </div>
@@ -242,14 +302,59 @@
                     <th>ছবি</th>
                     <th>পণ্যের নাম</th>
                     <th>ক্যাটাগরি</th>
-                    <th>মূল্য ও পরিসীমা</th>
+                    <th>বিক্রয় মূল্য</th>
                     <th>স্টক</th>
-                    <th>ছবি সংখ্যা</th>
+                    <th>স্ট্যাটাস (এক্টিভ/ডি-এক্টিভ)</th>
                     <th>অ্যাকশন</th>
                   </tr>
                 </thead>
                 <tbody id="adminProductsTableBody">
                   <!-- Rendered by admin.js -->
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+        
+        <!-- ==================== TAB 3: BRAND MANAGEMENT ==================== -->
+        <div class="tab-pane fade" id="brandsPane" role="tabpanel">
+          <div class="card border-0 shadow-sm rounded-4 p-4">
+            
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+              <div>
+                <h5 class="fw-bold mb-1 text-dark"><i class="fa-solid fa-tags text-warning me-2"></i>ব্র্যান্ড তালিকা ও ম্যানেজমেন্ট</h5>
+                <p class="text-muted small mb-0">দোকানের ব্র্যান্ড যোগ, সম্পাদনা ও মুছে ফেলার আধুনিক ব্যবস্থা</p>
+              </div>
+              <button class="btn btn-warning rounded-pill px-4 py-2 fw-semibold shadow-sm text-dark" onclick="openAddBrandModal()">
+                <i class="fa-solid fa-circle-plus me-1"></i> নতুন ব্র্যান্ড যোগ করুন
+              </button>
+            </div>
+
+            <!-- Brand Search & Filter Bar -->
+            <div class="row g-3 mb-4 align-items-center">
+              <div class="col-md-6 col-lg-5">
+                <div class="input-group">
+                  <span class="input-group-text bg-white border-end-0 rounded-start-pill ps-3"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                  <input type="text" id="brandSearchInput" class="form-control border-start-0 rounded-end-pill" placeholder="ব্র্যান্ডের নাম বা বিবরণ দিয়ে খুঁজুন..." oninput="handleBrandSearch(this.value)">
+                </div>
+              </div>
+            </div>
+
+            <!-- Brands Table -->
+            <div class="table-responsive">
+              <table class="table table-hover align-middle table-custom">
+                <thead class="table-light">
+                  <tr>
+                    <th style="width: 80px;">লোগো</th>
+                    <th>ব্র্যান্ডের নাম (English)</th>
+                    <th>বাংলা নাম</th>
+                    <th>সংক্ষিপ্ত বিবরণ</th>
+                    <th>সংযুক্ত পণ্য</th>
+                    <th class="text-end" style="width: 140px;">অ্যাকশন</th>
+                  </tr>
+                </thead>
+                <tbody id="adminBrandsTableBody">
+                  <!-- Rendered dynamically by admin.js -->
                 </tbody>
               </table>
             </div>
@@ -286,9 +391,15 @@
             </div>
 
             <div class="row g-3 mb-3">
-              <div class="col-md-4">
+              <div class="col-md-3">
                 <label class="form-label small fw-semibold">ক্যাটাগরি</label>
                 <select id="prodCategory" class="form-select">
+              <div class="col-md-3">
+                <label class="form-label small fw-semibold">ব্র্যান্ড (Brand)</label>
+                <select id="prodBrand" class="form-select">
+                  <option value="">-- কোনো ব্র্যান্ড নেই --</option>
+                </select>
+              </div>
                   <option value="ফাইল ও ফোল্ডার">ফাইল ও ফোল্ডার</option>
                   <option value="ডেস্ক অর্গানাইজার">ডেস্ক অর্গানাইজার</option>
                   <option value="কাগজ ও প্রিন্টিং">কাগজ ও প্রিন্টিং</option>
@@ -298,31 +409,30 @@
                   <option value="ইলেকট্রনিক্স ও হিসাব">ইলেকট্রনিক্স ও হিসাব</option>
                 </select>
               </div>
-              <div class="col-md-4">
-                <label class="form-label small fw-semibold">ব্যাজ (যেমন: বেস্ট সেলার, অফার)</label>
+              <div class="col-md-3">
+                <label class="form-label small fw-semibold">স্ট্যাটাস</label>
+                <select id="prodStatus" class="form-select">
+                  <option value="active">সক্রিয় (Active)</option>
+                  <option value="inactive">নিষ্ক্রিয় (Inactive)</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label small fw-semibold">ব্যাজ (যেমন: অফার)</label>
                 <input type="text" id="prodBadge" class="form-control" placeholder="বেস্ট সেলার / নতুন">
               </div>
-              <div class="col-md-4">
+              <div class="col-md-3">
                 <label class="form-label small fw-semibold">স্টক পরিমাণ (পিস)</label>
                 <input type="number" id="prodStock" class="form-control" value="100" min="0">
               </div>
             </div>
 
             <div class="row g-3 mb-3">
-              <div class="col-sm-6 col-md-3">
-                <label class="form-label small fw-semibold">সবচেয়ে কম মূল্য (৳)</label>
-                <input type="number" id="prodMinPrice" class="form-control" required placeholder="180">
-              </div>
-              <div class="col-sm-6 col-md-3">
-                <label class="form-label small fw-semibold">সবচেয়ে বেশি মূল্য (৳)</label>
-                <input type="number" id="prodMaxPrice" class="form-control" required placeholder="350">
-              </div>
-              <div class="col-sm-6 col-md-3">
+              <div class="col-sm-6">
                 <label class="form-label small fw-semibold text-primary">বর্তমান বিক্রয় মূল্য (৳) *</label>
                 <input type="number" id="prodSellingPrice" class="form-control fw-bold border-primary" required placeholder="240">
               </div>
-              <div class="col-sm-6 col-md-3">
-                <label class="form-label small fw-semibold text-muted">মূল্য কাটা/আসল দাম (৳)</label>
+              <div class="col-sm-6">
+                <label class="form-label small fw-semibold text-muted">আসল/কাটা দাম (৳) (ঐচ্ছিক)</label>
                 <input type="number" id="prodOriginalPrice" class="form-control" placeholder="350">
               </div>
             </div>
@@ -344,7 +454,7 @@
             </div>
 
             <div class="mb-3">
-              <label class="form-label small fw-semibold">পণ্যের ছবি লিংক (৫ থেকে ১০টি ছবি লিংক দিন) <span class="text-danger">*</span></label>
+              <label class="form-label small fw-semibold">পণ্যের ছবি লিংক (৫ থেকে ১০টি ছবির সরাসরি URL) <span class="text-danger">*</span></label>
               <textarea id="prodImages" class="form-control font-monospace small" rows="5" placeholder="প্রতি লাইনে একটি করে ছবির সরাসরি URL প্রদান করুন..." required></textarea>
               <div class="form-text small" id="prodImagesHelp">প্রতিটি পণ্যে ৫ থেকে ১০টি ছবি দিন যাতে প্রোডাক্ট ডিটেলস পেজে সুন্দর স্লাইডার প্রদর্শিত হয়।</div>
             </div>
@@ -352,6 +462,62 @@
             <div class="d-flex justify-content-end gap-2 pt-3 border-top">
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">বাতিল</button>
               <button type="submit" class="btn btn-primary px-4 fw-semibold">সংরক্ষণ করুন</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Order Edit Modal -->
+  <div class="modal fade" id="adminOrderEditModal" tabindex="-1" aria-labelledby="adminOrderEditModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content rounded-4 border-0 shadow-lg">
+        <div class="modal-header bg-light">
+          <h5 class="modal-title fw-bold" id="adminOrderEditModalLabel">
+            <i class="fa-solid fa-pen-to-square text-primary me-2"></i> অর্ডার সম্পাদনা করুন
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+          <form id="adminOrderEditForm" onsubmit="handleOrderEditSubmit(event)">
+            <input type="hidden" id="editOrderId" value="">
+
+            <div class="mb-3">
+              <label class="form-label small fw-semibold">গ্রাহকের নাম</label>
+              <input type="text" id="editOrderCustomerName" class="form-control" required>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label small fw-semibold">গ্রাহকের মোবাইল নম্বর</label>
+              <input type="tel" id="editOrderCustomerPhone" class="form-control" required>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label small fw-semibold">ডেলিভারি ঠিকানা</label>
+              <textarea id="editOrderCustomerAddress" class="form-control" rows="3" required></textarea>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label small fw-semibold">অর্ডার স্ট্যাটাস</label>
+              <select id="editOrderStatus" class="form-select">
+                <option value="Pending">অপেক্ষমান (Pending)</option>
+                <option value="Confirmed">কনফার্মড (Confirmed)</option>
+                <option value="Processing">প্রসেসিং (Processing)</option>
+                <option value="Shipped">ডেলিভারির পথে (Shipped)</option>
+                <option value="Delivered">ডেলিভার্ড (Delivered)</option>
+                <option value="Cancelled">বাতিল (Cancelled)</option>
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label small fw-semibold">অর্ডার নোট</label>
+              <input type="text" id="editOrderNotes" class="form-control">
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 pt-2 border-top">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">বাতিল</button>
+              <button type="submit" class="btn btn-primary px-4 fw-semibold">আপডেট করুন</button>
             </div>
           </form>
         </div>
@@ -374,9 +540,55 @@
         </div>
         <div class="modal-footer border-top-0 pt-0">
           <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">বন্ধ করুন</button>
-          <button type="button" id="adminInvoicePrintBtn" class="btn btn-primary btn-sm">
-            <i class="fa-solid fa-print me-1"></i> ইনভয়েস প্রিন্ট স্লিপ
+          <button type="button" id="adminInvoicePrintBtn" class="btn btn-warning btn-sm fw-bold">
+            <i class="fa-solid fa-print me-1"></i> পার্সেল ভাউচার প্রিন্ট
           </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  
+  <!-- Admin Brand Add / Edit Modal -->
+  <div class="modal fade" id="adminBrandModal" tabindex="-1" aria-labelledby="adminBrandModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content rounded-4 border-0 shadow-lg">
+        <div class="modal-header bg-light">
+          <h5 class="modal-title fw-bold" id="brandModalTitle">নতুন ব্র্যান্ড যোগ করুন</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+          <form id="adminBrandForm" onsubmit="handleBrandFormSubmit(event)">
+            <input type="hidden" id="editBrandId" value="">
+
+            <div class="mb-3">
+              <label class="form-label small fw-semibold">ব্র্যান্ডের নাম (English) <span class="text-danger">*</span></label>
+              <input type="text" id="brandName" class="form-control" required placeholder="যেমন: Deli, Casio, Double A">
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label small fw-semibold">বাংলা নাম <span class="text-muted">(ঐচ্ছিক)</span></label>
+              <input type="text" id="brandBanglaName" class="form-control" placeholder="যেমন: ডেলি, ক্যাসিও">
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label small fw-semibold">লোগো / ইমেজ URL <span class="text-muted">(ঐচ্ছিক)</span></label>
+              <input type="url" id="brandLogo" class="form-control" placeholder="https://example.com/logo.jpg">
+              <div class="form-text small">ফাঁকা রাখলে স্বয়ংক্রিয় স্টাইলিশ আইকন ব্যবহার হবে।</div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label small fw-semibold">বিবরণ / ট্যাগলাইন <span class="text-muted">(ঐচ্ছিক)</span></label>
+              <textarea id="brandDescription" class="form-control" rows="2" placeholder="ব্র্যান্ডের সংক্ষিপ্ত তথ্য"></textarea>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 pt-2 border-top">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">বাতিল</button>
+              <button type="submit" class="btn btn-warning px-4 fw-semibold text-dark">
+                <i class="fa-solid fa-floppy-disk me-1"></i> সংরক্ষণ করুন
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </div>
