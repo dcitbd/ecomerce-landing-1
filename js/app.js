@@ -40,6 +40,7 @@ let directCheckoutItem = null; // for "Order Now" direct buy
 
 // DOM Ready
 document.addEventListener('DOMContentLoaded', () => {
+  renderCategoryPills();
   renderProducts(products);
   updateCartBadge();
   setupOfferCountdown();
@@ -999,4 +1000,31 @@ function showToast(message, type = 'primary') {
 // Print Order Receipt Slip
 function printReceipt() {
   window.print();
+}
+
+// Dynamically render storefront category filter pills
+function renderCategoryPills() {
+  const container = document.getElementById('categoryPillsContainer');
+  if (!container) return;
+
+  let categories = JSON.parse(localStorage.getItem('dcb_categories') || 'null');
+  if (!categories || categories.length === 0) {
+    if (typeof DEFAULT_CATEGORIES !== 'undefined' && Array.isArray(DEFAULT_CATEGORIES)) {
+      categories = DEFAULT_CATEGORIES;
+    } else {
+      return;
+    }
+  }
+
+  const activeCatEl = container.querySelector('.cat-pill.active');
+  const currentCat = activeCatEl ? activeCatEl.getAttribute('data-cat') : 'all';
+
+  let html = `<button type="button" class="btn btn-sm btn-outline-secondary rounded-pill cat-pill ${currentCat === 'all' ? 'active' : ''}" data-cat="all" onclick="filterCategory('all', this)">সব পণ্য</button>`;
+
+  categories.forEach(c => {
+    const isAct = (currentCat === c.name || currentCat === c.english_name) ? 'active' : '';
+    html += `<button type="button" class="btn btn-sm btn-outline-secondary rounded-pill cat-pill ${isAct}" data-cat="${c.name}" onclick="filterCategory('${c.name}', this)">${c.name}</button>`;
+  });
+
+  container.innerHTML = html;
 }

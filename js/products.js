@@ -1,3 +1,14 @@
+/* Dream Cart BD - Pre-seeded Categories */
+const DEFAULT_CATEGORIES = [
+  { id: 1, name: "ফাইল ও ফোল্ডার", english_name: "Files & Folders", icon: "fa-solid fa-folder-open", image: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&auto=format&fit=crop&q=80", description: "অফিসের জরুরি ডকুমেন্টস ও ফাইল সংরক্ষণের সামগ্রী" },
+  { id: 2, name: "ডেস্ক অর্গানাইজার", english_name: "Desk Organizers", icon: "fa-solid fa-boxes-stacked", image: "https://images.unsplash.com/photo-1517842645767-c639042777db?w=400&auto=format&fit=crop&q=80", description: "টেবিল ও ওয়ার্কস্পেস গুছিয়ে রাখার প্রিমিয়াম ট্রয় ও স্ট্যান্ড" },
+  { id: 3, name: "কাগজ ও প্রিন্টিং", english_name: "Paper & Printing", icon: "fa-solid fa-print", image: "https://images.unsplash.com/photo-1586075010923-2dd4570fb338?w=400&auto=format&fit=crop&q=80", description: "উচ্চমানের A4, F4 পেপার ও প্রিন্টিং এক্সেসরিজ" },
+  { id: 4, name: "খাতা ও নোটপ্যাড", english_name: "Notebooks & Notepads", icon: "fa-solid fa-book-open", image: "https://images.unsplash.com/photo-1532012164546-f432f2e3777f?w=400&auto=format&fit=crop&q=80", description: "অফিস মিটিং, নোট ও হিসাব সংরক্ষণের খাতা" },
+  { id: 5, name: "কলম ও মার্কার", english_name: "Pens & Markers", icon: "fa-solid fa-pen-fancy", image: "https://images.unsplash.com/photo-1583521214690-73421a1829a9?w=400&auto=format&fit=crop&q=80", description: "স্মুথ রাইটিং জেল পেন, বলপেন ও হোয়াইটবোর্ড মার্কার" },
+  { id: 6, name: "স্টেশনারি টুলস", english_name: "Stationery Tools", icon: "fa-solid fa-scissors", image: "https://images.unsplash.com/photo-1506784983877-45594efa4cbe?w=400&auto=format&fit=crop&q=80", description: "স্ট্যাপলার, পাঞ্চ মেশিন, কাটার ও অফিস অ্যাক্সেসরিজ" },
+  { id: 7, name: "ইলেকট্রনিক্স ও হিসাব", english_name: "Electronics & Calculators", icon: "fa-solid fa-calculator", image: "https://images.unsplash.com/photo-1594980596870-8aa52a78d8cd?w=400&auto=format&fit=crop&q=80", description: "সঠিক হিসাবের জন্য অরিজিনাল ক্যালকুলেটর ও ব্যাটারি" }
+];
+
 
 /* Dream Cart BD - Pre-seeded Brands */
 const DEFAULT_BRANDS = [

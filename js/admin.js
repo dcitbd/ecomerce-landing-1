@@ -11,6 +11,9 @@ const SHOP_LOGO_URL = 'https://pictures-bangladesh.jijistatic.com/2033199_MjAwLT
 let currentAdminOrderFilter = 'all';
 let currentAdminProductFilter = 'all';
 let currentAdminBrandFilter = 'all';
+let currentAdminCategoryFilter = 'all';
+let currentCategorySearch = '';
+let currentCategoryFilterType = 'all';
 let currentAdminProductSearch = '';
 let currentBrandSearch = '';
 let currentBrandFilterType = 'all';
@@ -53,7 +56,7 @@ function switchAdminPane(paneId, btnEl) {
   if (btnEl) btnEl.classList.add('active');
 
   // Switch panes
-  const allPanes = ['ordersPane', 'productsPane', 'brandsPane', 'shopInfoPane'];
+  const allPanes = ['ordersPane', 'productsPane', 'brandsPane', 'categoriesPane', 'shopInfoPane'];
   allPanes.forEach(id => {
     const el = document.getElementById(id);
     if (el) {
@@ -66,6 +69,7 @@ function switchAdminPane(paneId, btnEl) {
     ordersPane: ['অর্ডার ম্যানেজমেন্ট ও ভাউচার', 'সকল গ্রাহকের অর্ডার ও পার্সেল চালান পরিচালনা করুন'],
     productsPane: ['প্রোডাক্ট ক্যাটালগ ও ইনভেন্টরি', 'পণ্য যোগ, এডিট, অ্যাক্টিভেশন ও স্টক মনিটরিং'],
     brandsPane: ['ব্র্যান্ড তালিকা ও ব্র্যান্ড ম্যানেজমেন্ট', 'দোকানের ব্র্যান্ড তালিকা তৈরি, সম্পাদনা ও মুছে ফেলা'],
+    categoriesPane: ['ক্যাটাগরি তালিকা ও ক্যাটাগরি ম্যানেজমেন্ট', 'দোকানের সকল পণ্যের ক্যাটাগরি তৈরি, সম্পাদনা ও মুছে ফেলা'],
     shopInfoPane: ['শপ তথ্য ও পরিচালনা গাইডলাইন', 'দোকানের প্রাতিষ্ঠানিক তথ্য, পলিসি ও অ্যাডমিন এসওপি']
   };
 
@@ -84,6 +88,9 @@ function switchAdminPane(paneId, btnEl) {
 
   if (paneId === 'brandsPane') {
     renderAdminBrands();
+  }
+  if (paneId === 'categoriesPane') {
+    renderAdminCategories();
   }
   if (paneId === 'productsPane') {
     populateProductBrandFilterDropdown();
@@ -279,8 +286,11 @@ function loadAdminDashboard() {
   renderAdminOrders();
   renderAdminProducts();
   renderAdminBrands();
+  renderAdminCategories();
   populateBrandDropdown();
+  populateCategoryDropdown();
   populateProductBrandFilterDropdown();
+  populateProductCategoryFilterDropdown();
 }
 
 function setupAdminListeners() {
@@ -371,6 +381,11 @@ function updateDashboardStats() {
   // Update DOM Brand counters
   setElText('sideBrandCount', brands.length);
   setElText('brandsCountInTable', brands.length);
+
+  // Update DOM Category counters
+  const categories = getCategories();
+  setElText('sideCatCount', categories.length);
+  setElText('categoriesCountInTable', categories.length);
 
   setElText('statTotalVisitors', visitors.toLocaleString());
 }
@@ -942,22 +957,73 @@ function clearProductBrandFilter() {
   renderAdminProducts();
 }
 
-// Render active filter chips bar in product management
+// Render active filter chips bar in product management (Category & Brand)
 function renderProductActiveFilterChips() {
   const container = document.getElementById('adminProductActiveFiltersBar');
   if (!container) return;
 
-  if (currentAdminBrandFilter && currentAdminBrandFilter !== 'all') {
-    const label = currentAdminBrandFilter === '__no_brand__' ? 'ব্র্যান্ড ছাড়া' : currentAdminBrandFilter;
-    container.innerHTML = `
-      <span class="badge bg-warning-subtle text-dark border border-warning px-3 py-2 rounded-pill d-inline-flex align-items-center gap-1">
-        <i class="fa-solid fa-tag text-warning"></i> ব্র্যান্ড: <strong>${label}</strong>
-        <button type="button" class="btn-close ms-1" style="font-size: 10px;" onclick="clearProductBrandFilter()" aria-label="রিসেট"></button>
+  let chipsHtml = '';
+
+  if (currentAdminCategoryFilter && currentAdminCategoryFilter !== 'all') {
+    const catLabel = currentAdminCategoryFilter === '__no_cat__' ? 'ক্যাটাগরি ছাড়া' : currentAdminCategoryFilter;
+    chipsHtml += `
+      <span class="badge bg-info-subtle text-info-emphasis border border-info px-2 py-1 rounded-pill d-inline-flex align-items-center gap-1">
+        <i class="fa-solid fa-layer-group text-info"></i> ক্যাটাগরি: <strong>${catLabel}</strong>
+        <button type="button" class="btn-close ms-1" style="font-size: 9px;" onclick="clearProductCategoryFilter()" aria-label="রিসেট"></button>
       </span>
     `;
-  } else {
-    container.innerHTML = '';
   }
+
+  if (currentAdminBrandFilter && currentAdminBrandFilter !== 'all') {
+    const brandLabel = currentAdminBrandFilter === '__no_brand__' ? 'ব্র্যান্ড ছাড়া' : currentAdminBrandFilter;
+    chipsHtml += `
+      <span class="badge bg-warning-subtle text-dark border border-warning px-2 py-1 rounded-pill d-inline-flex align-items-center gap-1">
+        <i class="fa-solid fa-tag text-warning"></i> ব্র্যান্ড: <strong>${brandLabel}</strong>
+        <button type="button" class="btn-close ms-1" style="font-size: 9px;" onclick="clearProductBrandFilter()" aria-label="রিসেট"></button>
+      </span>
+    `;
+  }
+
+  container.innerHTML = chipsHtml;
+}
+
+// Populate Category Filter Dropdown in Product Management toolbar
+function populateProductCategoryFilterDropdown() {
+  const filterSelect = document.getElementById('adminProductCategoryFilter');
+  if (!filterSelect) return;
+
+  const categories = getCategories();
+  const products = JSON.parse(localStorage.getItem('dcb_products') || '[]');
+
+  let html = `<option value="all">সকল ক্যাটাগরি (সব পণ্য - ${products.length}টি)</option>`;
+  
+  categories.forEach(c => {
+    const count = products.filter(p => p.category === c.name || p.category === c.english_name).length;
+    const isSel = (currentAdminCategoryFilter === c.name || currentAdminCategoryFilter === c.english_name) ? 'selected' : '';
+    html += `<option value="${c.name}" ${isSel}>${c.name} (${count}টি)</option>`;
+  });
+
+  filterSelect.innerHTML = html;
+  renderProductActiveFilterChips();
+}
+
+// Handle Category filter change in product table
+function handleProductCategoryFilterChange(catName) {
+  currentAdminCategoryFilter = catName;
+  renderProductActiveFilterChips();
+  renderAdminProducts();
+  if (catName !== 'all') {
+    showAdminToast(`ক্যাটাগরি ফিল্টার: ${catName}`, 'info');
+  }
+}
+
+// Clear category filter
+function clearProductCategoryFilter() {
+  currentAdminCategoryFilter = 'all';
+  const filterSelect = document.getElementById('adminProductCategoryFilter');
+  if (filterSelect) filterSelect.value = 'all';
+  renderProductActiveFilterChips();
+  renderAdminProducts();
 }
 
 // Live search for products
@@ -984,7 +1050,12 @@ function renderAdminProducts() {
     products = products.filter(p => (p.stock || 0) <= 10);
   }
 
-  // 2. Brand filter
+  // 2. Category filter
+  if (currentAdminCategoryFilter && currentAdminCategoryFilter !== 'all') {
+    products = products.filter(p => p.category === currentAdminCategoryFilter || (p.category && p.category.toLowerCase() === currentAdminCategoryFilter.toLowerCase()));
+  }
+
+  // 3. Brand filter
   if (brandFilter && brandFilter !== 'all') {
     if (brandFilter === '__no_brand__') {
       products = products.filter(p => !p.brand || p.brand.trim() === '');
@@ -1092,6 +1163,7 @@ function openAddProductModal() {
   document.getElementById('prodStock').value = 50;
 
   populateBrandDropdown('');
+  populateCategoryDropdown('');
   updateImagePreviews();
   calculateProductDiscount();
   checkStockLevel();
@@ -1128,6 +1200,7 @@ function openEditProductModal(productId) {
   updateImagePreviews();
 
   populateBrandDropdown(product.brand || '');
+  populateCategoryDropdown(product.category || '');
   calculateProductDiscount();
   checkStockLevel();
 
@@ -1546,4 +1619,323 @@ function deleteBrand(id) {
   renderAdminProducts();
   updateDashboardStats();
   showAdminToast(`'${brandToDelete.name}' ব্র্যান্ড মুছে ফেলা হয়েছে!`, 'info');
+}
+
+
+// ==================== CATEGORY MANAGEMENT LOGIC (CRUD & FILTERS) ====================
+
+function getCategories() {
+  let categories = JSON.parse(localStorage.getItem('dcb_categories') || 'null');
+  if (!categories || categories.length === 0) {
+    if (typeof DEFAULT_CATEGORIES !== 'undefined' && Array.isArray(DEFAULT_CATEGORIES)) {
+      categories = JSON.parse(JSON.stringify(DEFAULT_CATEGORIES));
+    } else {
+      categories = [
+        { id: 1, name: "ফাইল ও ফোল্ডার", english_name: "Files & Folders", icon: "fa-solid fa-folder-open", image: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&auto=format&fit=crop&q=80", description: "অফিসের জরুরি ডকুমেন্টস ও ফাইল সংরক্ষণের সামগ্রী" },
+        { id: 2, name: "ডেস্ক অর্গানাইজার", english_name: "Desk Organizers", icon: "fa-solid fa-boxes-stacked", image: "https://images.unsplash.com/photo-1517842645767-c639042777db?w=400&auto=format&fit=crop&q=80", description: "টেবিল ও ওয়ার্কস্পেস গুছিয়ে রাখার প্রিমিয়াম ট্রয় ও স্ট্যান্ড" },
+        { id: 3, name: "কাগজ ও প্রিন্টিং", english_name: "Paper & Printing", icon: "fa-solid fa-print", image: "https://images.unsplash.com/photo-1586075010923-2dd4570fb338?w=400&auto=format&fit=crop&q=80", description: "উচ্চমানের A4, F4 পেপার ও প্রিন্টিং এক্সেসরিজ" },
+        { id: 4, name: "খাতা ও নোটপ্যাড", english_name: "Notebooks & Notepads", icon: "fa-solid fa-book-open", image: "https://images.unsplash.com/photo-1532012164546-f432f2e3777f?w=400&auto=format&fit=crop&q=80", description: "অফিস মিটিং, নোট ও হিসাব সংরক্ষণের খাতা" },
+        { id: 5, name: "কলম ও মার্কার", english_name: "Pens & Markers", icon: "fa-solid fa-pen-fancy", image: "https://images.unsplash.com/photo-1583521214690-73421a1829a9?w=400&auto=format&fit=crop&q=80", description: "স্মুথ রাইটিং জেল পেন, বলপেন ও হোয়াইটবোর্ড মার্কার" },
+        { id: 6, name: "স্টেশনারি টুলস", english_name: "Stationery Tools", icon: "fa-solid fa-scissors", image: "https://images.unsplash.com/photo-1506784983877-45594efa4cbe?w=400&auto=format&fit=crop&q=80", description: "স্ট্যাপলার, পাঞ্চ মেশিন, কাটার ও অফিস অ্যাক্সেসরিজ" },
+        { id: 7, name: "ইলেকট্রনিক্স ও হিসাব", english_name: "Electronics & Calculators", icon: "fa-solid fa-calculator", image: "https://images.unsplash.com/photo-1594980596870-8aa52a78d8cd?w=400&auto=format&fit=crop&q=80", description: "সঠিক হিসাবের জন্য অরিজিনাল ক্যালকুলেটর ও ব্যাটারি" }
+      ];
+    }
+    localStorage.setItem('dcb_categories', JSON.stringify(categories));
+  }
+  return categories;
+}
+
+function saveCategories(categories) {
+  localStorage.setItem('dcb_categories', JSON.stringify(categories));
+}
+
+function handleCategorySearch(val) {
+  currentCategorySearch = (val || '').toLowerCase().trim();
+  renderAdminCategories();
+}
+
+function filterCategoriesByType(type) {
+  currentCategoryFilterType = type;
+  document.querySelectorAll('.cat-filter-btn').forEach(btn => btn.classList.remove('active'));
+  const activeBtn = document.getElementById(`catFilter_${type}`);
+  if (activeBtn) activeBtn.classList.add('active');
+  renderAdminCategories();
+}
+
+function viewProductsByCategory(catName) {
+  const prodBtn = document.getElementById('sideNav_products');
+  switchAdminPane('productsPane', prodBtn);
+
+  currentAdminCategoryFilter = catName;
+  const filterSelect = document.getElementById('adminProductCategoryFilter');
+  if (filterSelect) filterSelect.value = catName;
+  renderProductActiveFilterChips();
+  renderAdminProducts();
+  showAdminToast(`'${catName}' ক্যাটাগরির পণ্য ফিল্টার করা হয়েছে`, 'info');
+}
+
+function renderAdminCategories() {
+  const categories = getCategories();
+  const products = JSON.parse(localStorage.getItem('dcb_products') || '[]');
+  const tbody = document.getElementById('adminCategoriesTableBody');
+  if (!tbody) return;
+
+  let filtered = categories.filter(c => {
+    if (!currentCategorySearch) return true;
+    return (c.name && c.name.toLowerCase().includes(currentCategorySearch)) ||
+           (c.english_name && c.english_name.toLowerCase().includes(currentCategorySearch)) ||
+           (c.description && c.description.toLowerCase().includes(currentCategorySearch));
+  });
+
+  // Filter by products attached
+  if (currentCategoryFilterType === 'with_products') {
+    filtered = filtered.filter(c => {
+      const count = products.filter(p => p.category === c.name || p.category === c.english_name).length;
+      return count > 0;
+    });
+  } else if (currentCategoryFilterType === 'without_products') {
+    filtered = filtered.filter(c => {
+      const count = products.filter(p => p.category === c.name || p.category === c.english_name).length;
+      return count === 0;
+    });
+  }
+
+  // Update counters
+  setElText('categoriesCountInTable', filtered.length);
+  setElText('sideCatCount', categories.length);
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" class="text-center py-5 text-muted"><i class="fa-solid fa-layer-group fa-2x mb-2 text-secondary"></i><br>কোনো ক্যাটাগরি পাওয়া যায়নি।</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(c => {
+    const prodCount = products.filter(p => p.category === c.name || p.category === c.english_name).length;
+    const iconHtml = c.icon ? `<i class="${c.icon}"></i>` : '<i class="fa-solid fa-layer-group"></i>';
+    const visualDisplay = c.image ? `
+      <img src="${c.image}" alt="${c.name}" style="width: 44px; height: 44px; object-fit: cover; border-radius: 8px; border: 1px solid #e2e8f0;" onerror="this.src='https://via.placeholder.com/44?text=Category'">
+    ` : `
+      <div style="width: 44px; height: 44px; border-radius: 8px; background: #f0f9ff; color: #0284c7; display: flex; align-items: center; justify-content: center; font-size: 18px; border: 1px solid #bae6fd;">
+        ${iconHtml}
+      </div>
+    `;
+
+    return `
+      <tr>
+        <td>${visualDisplay}</td>
+        <td>
+          <strong class="text-dark fs-6">${c.name}</strong>
+          ${c.icon ? `<small class="text-muted d-block" style="font-size: 11px;"><i class="${c.icon} me-1 text-primary"></i>${c.icon}</small>` : ''}
+        </td>
+        <td><span class="badge bg-light text-dark border">${c.english_name || '-'}</span></td>
+        <td><small class="text-muted">${c.description || 'কোনো বিবরণ নেই'}</small></td>
+        <td>
+          <span class="badge bg-info-subtle text-info-emphasis border border-info px-2 py-1">
+            <i class="fa-solid fa-boxes-stacked me-1"></i>${prodCount} টি পণ্য
+          </span>
+        </td>
+        <td class="text-end">
+          <button class="btn btn-sm btn-outline-info rounded-pill me-1" onclick="viewProductsByCategory('${c.name}')" title="এই ক্যাটাগরির পণ্যগুলো দেখুন">
+            <i class="fa-solid fa-boxes-stacked me-1"></i>পণ্য দেখুন
+          </button>
+          <button class="btn btn-sm btn-outline-primary rounded-pill me-1" onclick="openEditCategoryModal(${c.id})" title="সম্পাদনা">
+            <i class="fa-solid fa-pen-to-square"></i>
+          </button>
+          <button class="btn btn-sm btn-outline-danger rounded-pill" onclick="deleteCategory(${c.id})" title="মুছে ফেলুন">
+            <i class="fa-solid fa-trash-can"></i>
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function populateCategoryDropdown(selectedCategory = '') {
+  const select = document.getElementById('prodCategory');
+  if (!select) return;
+
+  const categories = getCategories();
+  let html = '';
+  categories.forEach(c => {
+    const isSel = (selectedCategory && (selectedCategory === c.name || selectedCategory === c.english_name)) ? 'selected' : '';
+    html += `<option value="${c.name}" ${isSel}>${c.name} (${c.english_name || c.name})</option>`;
+  });
+  select.innerHTML = html;
+}
+
+function openAddCategoryModal() {
+  document.getElementById('categoryModalTitle').innerText = 'নতুন ক্যাটাগরি যোগ করুন';
+  document.getElementById('adminCategoryForm').reset();
+  document.getElementById('editCategoryId').value = '';
+  document.getElementById('catIcon').value = 'fa-solid fa-folder-open';
+  updateCatIconPreview();
+  updateCatImagePreview();
+
+  const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('adminCategoryModal'));
+  modal.show();
+}
+
+function openEditCategoryModal(id) {
+  const categories = getCategories();
+  const c = categories.find(item => item.id == id);
+  if (!c) return;
+
+  document.getElementById('categoryModalTitle').innerText = 'ক্যাটাগরি সম্পাদনা করুন';
+  document.getElementById('editCategoryId').value = c.id;
+  document.getElementById('catName').value = c.name || '';
+  document.getElementById('catEnglishName').value = c.english_name || '';
+  document.getElementById('catIcon').value = c.icon || 'fa-solid fa-layer-group';
+  document.getElementById('catImage').value = c.image || '';
+  document.getElementById('catDescription').value = c.description || '';
+
+  updateCatIconPreview();
+  updateCatImagePreview();
+
+  const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('adminCategoryModal'));
+  modal.show();
+}
+
+function selectCatIcon(iconClass) {
+  const input = document.getElementById('catIcon');
+  if (input) {
+    input.value = iconClass;
+    updateCatIconPreview();
+  }
+}
+
+function updateCatIconPreview() {
+  const input = document.getElementById('catIcon');
+  const preview = document.getElementById('catIconPreview');
+  if (!preview) return;
+  const val = input ? input.value.trim() : '';
+  preview.innerHTML = `<i class="${val || 'fa-solid fa-layer-group'}"></i>`;
+}
+
+function handleCatImageUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const imgInput = document.getElementById('catImage');
+    if (imgInput) {
+      imgInput.value = e.target.result;
+      updateCatImagePreview();
+      showAdminToast('ক্যাটাগরি ছবি আপলোড সফল হয়েছে!', 'success');
+    }
+  };
+  reader.readAsDataURL(file);
+  event.target.value = '';
+}
+
+function updateCatImagePreview() {
+  const container = document.getElementById('catImagePreviewContainer');
+  const input = document.getElementById('catImage');
+  if (!container) return;
+
+  const val = input ? input.value.trim() : '';
+  if (val) {
+    container.innerHTML = `
+      <img src="${val}" alt="ক্যাটাগরি প্রিভিউ" style="width: 44px; height: 44px; object-fit: cover; border-radius: 8px; border: 1px solid #cbd5e1; background: #fff;" onerror="this.src='https://via.placeholder.com/44?text=Error'">
+      <div class="small text-muted">ক্যাটাগরি ছবি প্রিভিউ প্রদর্শিত হচ্ছে</div>
+    `;
+  } else {
+    container.innerHTML = `<span class="text-muted small m-auto">ছবির লিংক দিলে বা আপলোড করলে এখানে প্রিভিউ দেখা যাবে</span>`;
+  }
+}
+
+function handleCategoryFormSubmit(e) {
+  e.preventDefault();
+  const idVal = document.getElementById('editCategoryId').value;
+  const name = document.getElementById('catName').value.trim();
+  const english_name = document.getElementById('catEnglishName').value.trim();
+  const icon = document.getElementById('catIcon').value.trim() || 'fa-solid fa-layer-group';
+  const image = document.getElementById('catImage').value.trim();
+  const description = document.getElementById('catDescription').value.trim();
+
+  if (!name) {
+    showAdminToast('ক্যাটাগরির নাম প্রদান করুন!', 'danger');
+    return;
+  }
+
+  let categories = getCategories();
+  if (idVal) {
+    const idx = categories.findIndex(c => c.id == idVal);
+    if (idx !== -1) {
+      const oldName = categories[idx].name;
+      categories[idx].name = name;
+      categories[idx].english_name = english_name;
+      categories[idx].icon = icon;
+      categories[idx].image = image;
+      categories[idx].description = description;
+
+      // Update associated products if category name changed
+      if (oldName !== name) {
+        let products = JSON.parse(localStorage.getItem('dcb_products') || '[]');
+        products.forEach(p => {
+          if (p.category === oldName) p.category = name;
+        });
+        localStorage.setItem('dcb_products', JSON.stringify(products));
+      }
+
+      showAdminToast(`'${name}' ক্যাটাগরি তথ্য আপডেট করা হয়েছে!`, 'success');
+    }
+  } else {
+    const newId = categories.length > 0 ? Math.max(...categories.map(c => c.id || 0)) + 1 : 1;
+    categories.push({
+      id: newId,
+      name,
+      english_name,
+      icon,
+      image,
+      description
+    });
+    showAdminToast(`'${name}' নতুন ক্যাটাগরি সফলভাবে যুক্ত হয়েছে!`, 'success');
+  }
+
+  saveCategories(categories);
+  renderAdminCategories();
+  populateCategoryDropdown();
+  populateProductCategoryFilterDropdown();
+  renderAdminProducts();
+  updateDashboardStats();
+
+  const modal = bootstrap.Modal.getInstance(document.getElementById('adminCategoryModal'));
+  if (modal) modal.hide();
+}
+
+function deleteCategory(id) {
+  const categories = getCategories();
+  const catToDelete = categories.find(c => c.id == id);
+  if (!catToDelete) return;
+
+  const products = JSON.parse(localStorage.getItem('dcb_products') || '[]');
+  const count = products.filter(p => p.category === catToDelete.name || p.category === catToDelete.english_name).length;
+
+  let msg = `আপনি কি নিশ্চিত যে '${catToDelete.name}' ক্যাটাগরি মুছে ফেলতে চান?`;
+  if (count > 0) {
+    msg += `\nসতর্কতা: এই ক্যাটাগরির সাথে ${count}টি পণ্য সংযুক্ত আছে। ডিলিট করলে পণ্যগুলোর ক্যাটাগরি 'সাধারণ সামগ্রী' হিসেবে সেট হবে।`;
+  }
+
+  if (!confirm(msg)) return;
+
+  let updatedCategories = categories.filter(c => c.id != id);
+  saveCategories(updatedCategories);
+
+  // Re-assign category on linked products
+  if (count > 0) {
+    products.forEach(p => {
+      if (p.category === catToDelete.name || p.category === catToDelete.english_name) {
+        p.category = 'সাধারণ সামগ্রী';
+      }
+    });
+    localStorage.setItem('dcb_products', JSON.stringify(products));
+  }
+
+  renderAdminCategories();
+  populateCategoryDropdown();
+  populateProductCategoryFilterDropdown();
+  renderAdminProducts();
+  updateDashboardStats();
+  showAdminToast(`'${catToDelete.name}' ক্যাটাগরি মুছে ফেলা হয়েছে!`, 'info');
 }

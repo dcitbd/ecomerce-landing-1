@@ -687,6 +687,15 @@
             <span class="badge bg-warning text-dark rounded-pill" id="sideBrandCount">0</span>
           </button>
 
+          <!-- Menu 4: Categories (New Category Management!) -->
+          <button class="sidebar-item" id="sideNav_categories" onclick="switchAdminPane('categoriesPane', this)" title="ক্যাটাগরি ম্যানেজমেন্ট">
+            <div class="icon-box text-info">
+              <i class="fa-solid fa-layer-group"></i>
+            </div>
+            <span class="flex-grow-1 sidebar-item-text">ক্যাটাগরি ম্যানেজমেন্ট</span>
+            <span class="badge bg-info text-white rounded-pill" id="sideCatCount">0</span>
+          </button>
+
           <!-- Menu 4: Shop Info & Guidelines -->
           <button class="sidebar-item" id="sideNav_shopInfo" onclick="switchAdminPane('shopInfoPane', this)" title="শপ তথ্য ও গাইডলাইন">
             <div class="icon-box text-info">
@@ -763,6 +772,9 @@
             </a>
             <button class="btn btn-warning text-dark btn-sm rounded-pill px-3 fw-semibold shadow-sm d-flex align-items-center gap-1" onclick="openAddBrandModal()" title="নতুন ব্র্যান্ড যুক্ত করুন">
               <i class="fa-solid fa-tag"></i> <span class="d-none d-sm-inline">নতুন ব্র্যান্ড</span>
+            </button>
+            <button class="btn btn-info text-white btn-sm rounded-pill px-3 fw-semibold shadow-sm d-flex align-items-center gap-1" onclick="openAddCategoryModal()" title="নতুন ক্যাটাগরি যুক্ত করুন">
+              <i class="fa-solid fa-layer-group"></i> <span class="d-none d-sm-inline">নতুন ক্যাটাগরি</span>
             </button>
             <button class="btn btn-primary btn-sm rounded-pill px-3 fw-semibold shadow-sm d-flex align-items-center gap-1" onclick="openAddProductModal()" title="নতুন পণ্য যুক্ত করুন">
               <i class="fa-solid fa-plus"></i> <span>নতুন পণ্য</span>
@@ -977,18 +989,29 @@
                 </div>
               </div>
 
-              <!-- Search & Brand Filter Bar -->
+              <!-- Search, Category & Brand Filter Bar -->
               <div class="row g-2 mb-3 align-items-center">
                 <!-- Search Box -->
-                <div class="col-12 col-md-5 col-lg-4">
+                <div class="col-12 col-md-4 col-lg-4">
                   <div class="input-group">
                     <span class="input-group-text bg-white border-end-0 rounded-start-pill ps-3"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
                     <input type="text" id="adminProductSearchInput" class="form-control border-start-0 rounded-end-pill" placeholder="পণ্যের নাম, ক্যাটাগরি বা ব্র্যান্ড দিয়ে খুঁজুন..." oninput="handleProductSearch(this.value)">
                   </div>
                 </div>
 
-                <!-- Brand Filter Dropdown (New feature!) -->
-                <div class="col-12 col-sm-6 col-md-4 col-lg-4">
+                <!-- Category Filter Dropdown (New!) -->
+                <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                  <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0 rounded-start-pill ps-3"><i class="fa-solid fa-layer-group text-info"></i></span>
+                    <select id="adminProductCategoryFilter" class="form-select border-start-0 rounded-end-pill" onchange="handleProductCategoryFilterChange(this.value)">
+                      <option value="all">সকল ক্যাটাগরি (সব পণ্য)</option>
+                      <!-- Dynamically populated by admin.js -->
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Brand Filter Dropdown -->
+                <div class="col-12 col-sm-6 col-md-4 col-lg-3">
                   <div class="input-group">
                     <span class="input-group-text bg-white border-end-0 rounded-start-pill ps-3"><i class="fa-solid fa-tags text-warning"></i></span>
                     <select id="adminProductBrandFilter" class="form-select border-start-0 rounded-end-pill" onchange="handleProductBrandFilterChange(this.value)">
@@ -999,10 +1022,9 @@
                 </div>
 
                 <!-- Active Filter Tags / Reset Button -->
-                <div class="col-12 col-sm-6 col-md-3 col-lg-4 d-flex align-items-center gap-2" id="adminProductActiveFiltersBar">
+                <div class="col-12 col-lg-2 d-flex align-items-center flex-wrap gap-2" id="adminProductActiveFiltersBar">
                   <!-- Dynamically rendered -->
                 </div>
-              </div>
               </div>
 
               <!-- Products Responsive Table -->
@@ -1088,6 +1110,64 @@
                   </tbody>
                 </table>
               </div>
+            </div>
+          </div>
+
+
+          <!-- ============================================================ -->
+          <!-- PANE 4: CATEGORY MANAGEMENT (New Prominent Requirement!)     -->
+          <!-- ============================================================ -->
+          <div id="categoriesPane" class="admin-pane" style="display: none;">
+            
+            <div class="card border-0 shadow-sm rounded-4 p-3 p-md-4">
+              
+              <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+                <div>
+                  <h5 class="fw-bold mb-1 text-dark"><i class="fa-solid fa-layer-group text-info me-2"></i>ক্যাটাগরি তালিকা ও ক্যাটাগরি ম্যানেজমেন্ট</h5>
+                  <p class="text-muted small mb-0">দোকানের সকল পণ্যের ক্যাটাগরি তৈরি করুন, সম্পাদনা বা মুছে ফেলুন এবং পণ্যের সাথে যুক্ত করুন</p>
+                </div>
+                <button class="btn btn-info text-white rounded-pill px-4 py-2 fw-semibold shadow-sm" onclick="openAddCategoryModal()">
+                  <i class="fa-solid fa-circle-plus me-1"></i> নতুন ক্যাটাগরি যোগ করুন
+                </button>
+              </div>
+
+              <!-- Category Search & Filter Bar -->
+              <div class="row g-2 mb-4 align-items-center">
+                <div class="col-12 col-md-5 col-lg-4">
+                  <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0 rounded-start-pill ps-3"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                    <input type="text" id="categorySearchInput" class="form-control border-start-0 rounded-end-pill" placeholder="ক্যাটাগরির নাম বা বিবরণ দিয়ে খুঁজুন..." oninput="handleCategorySearch(this.value)">
+                  </div>
+                </div>
+                <!-- Category Filter Tabs -->
+                <div class="col-12 col-md-7 col-lg-8 d-flex flex-wrap align-items-center justify-content-md-end gap-2">
+                  <div class="btn-group btn-group-sm rounded-pill p-1 bg-light border" role="group">
+                    <button type="button" class="btn btn-sm rounded-pill cat-filter-btn active px-3" id="catFilter_all" onclick="filterCategoriesByType('all')">সকল ক্যাটাগরি</button>
+                    <button type="button" class="btn btn-sm rounded-pill cat-filter-btn px-3" id="catFilter_with_products" onclick="filterCategoriesByType('with_products')">পণ্য সংযুক্ত</button>
+                    <button type="button" class="btn btn-sm rounded-pill cat-filter-btn px-3" id="catFilter_without_products" onclick="filterCategoriesByType('without_products')">পণ্যহীন</button>
+                  </div>
+                  <span class="text-muted small ms-md-2">মোট ক্যাটাগরি: <strong id="categoriesCountInTable" class="text-dark">0</strong> টি</span>
+                </div>
+              </div>
+
+              <!-- Categories Table -->
+              <div class="table-responsive">
+                <table class="table table-hover align-middle table-custom">
+                  <thead>
+                    <tr>
+                      <th style="width: 75px;">আইকন / ছবি</th>
+                      <th>ক্যাটাগরির নাম (বাংলা)</th>
+                      <th>ইংরেজি নাম</th>
+                      <th>বিবরণ ও পরিচিতি</th>
+                      <th>সংযুক্ত পণ্য সংখ্যা</th>
+                      <th class="text-end" style="width: 150px;">অ্যাকশন</th>
+                    </tr>
+                  </thead>
+                  <tbody id="adminCategoriesTableBody">
+                    <!-- Dynamic rendering by admin.js -->
+                  </tbody>
+                </table>
+              </div>
 
             </div>
 
@@ -1095,7 +1175,7 @@
 
 
           <!-- ============================================================ -->
-          <!-- PANE 4: SHOP INFO & OPERATIONAL GUIDELINES (New requirement!) -->
+          <!-- PANE 5: SHOP INFO & OPERATIONAL GUIDELINES (New requirement!) -->
           <!-- ============================================================ -->
           <div id="shopInfoPane" class="admin-pane" style="display: none;">
             
@@ -1347,7 +1427,12 @@
                 </div>
 
                 <div class="col-12 col-sm-6 col-md-4">
-                  <label class="form-label small fw-semibold text-dark">ক্যাটাগরি <span class="text-danger">*</span></label>
+                  <label class="form-label small fw-semibold text-dark d-flex justify-content-between align-items-center">
+                    <span>ক্যাটাগরি <span class="text-danger">*</span></span>
+                    <button type="button" class="btn btn-link p-0 text-info small text-decoration-none" onclick="openAddCategoryModal()" title="নতুন ক্যাটাগরি তৈরি করুন" style="font-size: 11px;">
+                      <i class="fa-solid fa-plus-circle"></i> নতুন ক্যাটাগরি
+                    </button>
+                  </label>
                   <select id="prodCategory" class="form-select">
                     <option value="ফাইল ও ফোল্ডার">ফাইল ও ফোল্ডার</option>
                     <option value="ডেস্ক অর্গানাইজার">ডেস্ক অর্গানাইজার</option>
@@ -1588,6 +1673,94 @@
               <button type="button" class="btn btn-secondary px-3 rounded-pill" data-bs-dismiss="modal">বাতিল</button>
               <button type="submit" class="btn btn-warning px-4 text-dark fw-semibold rounded-pill shadow-sm">
                 <i class="fa-solid fa-floppy-disk me-1"></i> ব্র্যান্ড সংরক্ষণ করুন
+              </button>
+            </div>
+
+          </form>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Category Add / Edit Modal -->
+  <div class="modal fade" id="adminCategoryModal" tabindex="-1" aria-labelledby="adminCategoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content rounded-4 border-0 shadow-lg">
+        
+        <div class="modal-header bg-light border-bottom py-3 px-4">
+          <div class="d-flex align-items-center gap-2">
+            <div class="badge bg-info text-white p-2 rounded-3"><i class="fa-solid fa-layer-group"></i></div>
+            <div>
+              <h5 class="modal-title fw-bold text-dark mb-0" id="categoryModalTitle">নতুন ক্যাটাগরি যোগ করুন</h5>
+              <small class="text-muted">দোকানের প্রোডাক্ট ক্যাটাগরি পরিচালনা</small>
+            </div>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <div class="modal-body p-4">
+          <form id="adminCategoryForm" onsubmit="handleCategoryFormSubmit(event)">
+            <input type="hidden" id="editCategoryId" value="">
+
+            <div class="mb-3">
+              <label class="form-label small fw-semibold text-dark">ক্যাটাগরির নাম (বাংলা) <span class="text-danger">*</span></label>
+              <input type="text" id="catName" class="form-control" required placeholder="যেমন: ফাইল ও ফোল্ডার, ডেস্ক অর্গানাইজার">
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label small fw-semibold text-dark">ইংরেজি নাম <span class="text-muted">(ঐচ্ছিক)</span></label>
+              <input type="text" id="catEnglishName" class="form-control" placeholder="e.g. Files & Folders, Desk Organizers">
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label small fw-semibold text-dark">ফন্টঅসাম আইকন ক্লাস <span class="text-muted">(ঐচ্ছিক)</span></label>
+              <input type="text" id="catIcon" class="form-control" placeholder="fa-solid fa-folder-open" oninput="updateCatIconPreview()">
+              <div class="suggestion-chips-wrap">
+                <span class="text-muted small align-self-center me-1" style="font-size: 11px;">পছন্দ করুন:</span>
+                <span class="suggestion-chip" onclick="selectCatIcon('fa-solid fa-folder-open')"><i class="fa-solid fa-folder-open me-1"></i>ফোল্ডার</span>
+                <span class="suggestion-chip" onclick="selectCatIcon('fa-solid fa-boxes-stacked')"><i class="fa-solid fa-boxes-stacked me-1"></i>ডেস্ক/বক্স</span>
+                <span class="suggestion-chip" onclick="selectCatIcon('fa-solid fa-print')"><i class="fa-solid fa-print me-1"></i>প্রিন্ট</span>
+                <span class="suggestion-chip" onclick="selectCatIcon('fa-solid fa-book-open')"><i class="fa-solid fa-book-open me-1"></i>খাতা</span>
+                <span class="suggestion-chip" onclick="selectCatIcon('fa-solid fa-pen-fancy')"><i class="fa-solid fa-pen-fancy me-1"></i>কলম</span>
+                <span class="suggestion-chip" onclick="selectCatIcon('fa-solid fa-scissors')"><i class="fa-solid fa-scissors me-1"></i>টুলস</span>
+                <span class="suggestion-chip" onclick="selectCatIcon('fa-solid fa-calculator')"><i class="fa-solid fa-calculator me-1"></i>হিসাব</span>
+              </div>
+              <div class="d-flex align-items-center gap-2 mt-2 p-2 bg-light rounded-3 border" id="catIconPreviewWrap">
+                <span class="small text-muted">আইকন প্রিভিউ:</span>
+                <div id="catIconPreview" class="badge bg-info-subtle text-info p-2 fs-6 rounded-3"><i class="fa-solid fa-layer-group"></i></div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <label class="form-label small fw-semibold text-dark mb-0">ছবি / ব্যানার <span class="text-muted">(URL বা ফাইল আপলোড)</span></label>
+                <div>
+                  <input type="file" id="catImageFileInput" accept="image/*" class="d-none" onchange="handleCatImageUpload(event)">
+                  <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill" onclick="document.getElementById('catImageFileInput').click()" style="font-size: 11px;">
+                    <i class="fa-solid fa-cloud-arrow-up me-1"></i> ফাইল আপলোড
+                  </button>
+                </div>
+              </div>
+              <input type="url" id="catImage" class="form-control" placeholder="https://example.com/cat-banner.jpg" oninput="updateCatImagePreview()">
+              <div class="form-text small text-muted">ক্যাটাগরির ব্যানার বা পণ্যের রেফারেন্স ছবি।</div>
+              
+              <!-- Category Image Preview -->
+              <div id="catImagePreviewContainer" class="p-2 border rounded-3 bg-light d-flex align-items-center gap-2 mt-2" style="min-height: 52px;">
+                <span class="text-muted small m-auto">ছবির লিংক দিলে বা আপলোড করলে এখানে প্রিভিউ দেখা যাবে</span>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label small fw-semibold text-dark">সংক্ষিপ্ত বিবরণ / পরিচিতি <span class="text-muted">(ঐচ্ছিক)</span></label>
+              <textarea id="catDescription" class="form-control" rows="2" placeholder="ক্যাটাগরির সংক্ষিপ্ত বিবরণ লিখুন..."></textarea>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+              <button type="button" class="btn btn-secondary px-3 rounded-pill" data-bs-dismiss="modal">বাতিল</button>
+              <button type="submit" class="btn btn-info text-white px-4 fw-semibold rounded-pill shadow-sm">
+                <i class="fa-solid fa-floppy-disk me-1"></i> ক্যাটাগরি সংরক্ষণ করুন
               </button>
             </div>
 
