@@ -87,7 +87,10 @@ function renderProducts(items) {
             </span>
           </div>
           <div class="product-info">
-            <div class="product-category">${p.category || 'অফিস ইকুইপমেন্ট'}</div>
+            <div class="product-category d-flex justify-content-between align-items-center">
+              <span>${p.category || 'অফিস ইকুইপমেন্ট'}</span>
+              ${p.brand ? `<span class="badge bg-warning-subtle text-dark border border-warning" style="font-size: 10.5px;"><i class="fa-solid fa-tag me-1"></i>${p.brand}</span>` : ''}
+            </div>
             <div class="product-title" onclick="openProductModal(${p.id})">${p.name}</div>
             <div class="product-rating">
               <i class="fa-solid fa-star"></i>
@@ -157,7 +160,8 @@ function applyFilters(category, searchTerm) {
     filtered = filtered.filter(p => 
       p.name.toLowerCase().includes(searchTerm) || 
       (p.english_name && p.english_name.toLowerCase().includes(searchTerm)) ||
-      (p.description && p.description.toLowerCase().includes(searchTerm))
+      (p.description && p.description.toLowerCase().includes(searchTerm)) ||
+      (p.brand && p.brand.toLowerCase().includes(searchTerm))
     );
   }
 

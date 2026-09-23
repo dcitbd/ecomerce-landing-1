@@ -10,11 +10,217 @@ const SHOP_LOGO_URL = 'https://pictures-bangladesh.jijistatic.com/2033199_MjAwLT
 
 let currentAdminOrderFilter = 'all';
 let currentAdminProductFilter = 'all';
+let currentAdminBrandFilter = 'all';
+let currentAdminProductSearch = '';
+let currentBrandSearch = '';
+let currentBrandFilterType = 'all';
 
 document.addEventListener('DOMContentLoaded', () => {
   checkAdminAuth();
   setupAdminListeners();
+
+  // Restore desktop sidebar collapse preference
+  const isCollapsed = localStorage.getItem('dcb_admin_sidebar_collapsed');
+  const wrapper = document.querySelector('.admin-wrapper');
+  if (wrapper && isCollapsed === 'true') {
+    wrapper.classList.add('admin-sidebar-collapsed');
+  }
 });
+
+// -------------------- SIDEBAR & PANE SWITCHING --------------------
+
+// Toggle sidebar collapsed state on desktop
+function toggleDesktopSidebar() {
+  const wrapper = document.querySelector('.admin-wrapper');
+  if (!wrapper) return;
+  wrapper.classList.toggle('admin-sidebar-collapsed');
+  const isCollapsed = wrapper.classList.contains('admin-sidebar-collapsed');
+  localStorage.setItem('dcb_admin_sidebar_collapsed', isCollapsed ? 'true' : 'false');
+}
+
+// Toggle mobile off-canvas drawer sidebar
+function toggleSidebar() {
+  const sidebar = document.getElementById('adminSidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  if (sidebar) sidebar.classList.toggle('show');
+  if (overlay) overlay.classList.toggle('show');
+}
+
+// Switch between main admin tabs/panes
+function switchAdminPane(paneId, btnEl) {
+  // Update sidebar active buttons
+  document.querySelectorAll('.sidebar-item').forEach(el => el.classList.remove('active'));
+  if (btnEl) btnEl.classList.add('active');
+
+  // Switch panes
+  const allPanes = ['ordersPane', 'productsPane', 'brandsPane', 'shopInfoPane'];
+  allPanes.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.style.display = (id === paneId) ? 'block' : 'none';
+    }
+  });
+
+  // Topbar titles
+  const titles = {
+    ordersPane: ['অর্ডার ম্যানেজমেন্ট ও ভাউচার', 'সকল গ্রাহকের অর্ডার ও পার্সেল চালান পরিচালনা করুন'],
+    productsPane: ['প্রোডাক্ট ক্যাটালগ ও ইনভেন্টরি', 'পণ্য যোগ, এডিট, অ্যাক্টিভেশন ও স্টক মনিটরিং'],
+    brandsPane: ['ব্র্যান্ড তালিকা ও ব্র্যান্ড ম্যানেজমেন্ট', 'দোকানের ব্র্যান্ড তালিকা তৈরি, সম্পাদনা ও মুছে ফেলা'],
+    shopInfoPane: ['শপ তথ্য ও পরিচালনা গাইডলাইন', 'দোকানের প্রাতিষ্ঠানিক তথ্য, পলিসি ও অ্যাডমিন এসওপি']
+  };
+
+  if (titles[paneId]) {
+    setElText('currentSectionTitle', titles[paneId][0]);
+    setElText('currentSectionSubtitle', titles[paneId][1]);
+  }
+
+  // Close mobile sidebar smoothly
+  const sidebar = document.getElementById('adminSidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  if (sidebar && sidebar.classList.contains('show')) {
+    sidebar.classList.remove('show');
+    if (overlay) overlay.classList.remove('show');
+  }
+
+  if (paneId === 'brandsPane') {
+    renderAdminBrands();
+  }
+  if (paneId === 'productsPane') {
+    populateProductBrandFilterDropdown();
+    renderAdminProducts();
+  }
+  if (paneId === 'ordersPane') {
+    renderAdminOrders();
+  }
+}
+
+// -------------------- PRODUCT IMAGE PREVIEW & FILE UPLOAD --------------------
+
+// Interactive Live Gallery Previews with Individual Delete & Primary Image Badge
+function updateImagePreviews() {
+  const container = document.getElementById('prodImagesPreviewContainer');
+  const textarea = document.getElementById('prodImages');
+  const countBadge = document.getElementById('prodImageCountBadge');
+  if (!container || !textarea) return;
+
+  const urls = textarea.value.split(/[\n,]+/).map(s => s.trim()).filter(Boolean);
+
+  if (countBadge) {
+    countBadge.innerText = `${urls.length}টি ছবি`;
+  }
+
+  if (urls.length === 0) {
+    container.innerHTML = '<span class="text-muted small m-auto">ছবি লিংক পেস্ট করলে বা আপলোড করলে এখানে থাম্বনেইল দেখা যাবে</span>';
+    return;
+  }
+
+  container.innerHTML = urls.map((u, idx) => `
+    <div class="image-preview-card" title="ছবি #${idx + 1}">
+      <img src="${u}" alt="প্রিভিউ ${idx + 1}" onerror="this.src='https://via.placeholder.com/80?text=Error'">
+      ${idx === 0 ? '<span class="primary-badge"><i class="fa-solid fa-star me-1"></i>মূল ছবি</span>' : ''}
+      <button type="button" class="delete-btn" onclick="removeProductImageAt(${idx})" title="ছবিটি মুছে ফেলুন">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+  `).join('');
+}
+
+// Remove single image from list
+function removeProductImageAt(index) {
+  const textarea = document.getElementById('prodImages');
+  if (!textarea) return;
+  const urls = textarea.value.split(/[\n,]+/).map(s => s.trim()).filter(Boolean);
+  if (index >= 0 && index < urls.length) {
+    urls.splice(index, 1);
+    textarea.value = urls.join('\n');
+    updateImagePreviews();
+    showAdminToast('ছবিটি তালিকা থেকে সরানো হয়েছে', 'info');
+  }
+}
+
+// Handle direct image file upload from phone or computer using FileReader
+function handleProductImageFiles(event) {
+  const files = event.target.files;
+  if (!files || files.length === 0) return;
+
+  const textarea = document.getElementById('prodImages');
+  let currentUrls = textarea ? textarea.value.split(/[\n,]+/).map(s => s.trim()).filter(Boolean) : [];
+
+  let loadedCount = 0;
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const base64Data = e.target.result;
+      currentUrls.push(base64Data);
+      loadedCount++;
+      if (loadedCount === files.length) {
+        if (textarea) {
+          textarea.value = currentUrls.join('\n');
+          updateImagePreviews();
+          showAdminToast(`${loadedCount}টি ছবি সফলভাবে আপলোড হয়েছে!`, 'success');
+        }
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+  // Reset file input so same file can be selected again if needed
+  event.target.value = '';
+}
+
+// Dynamic live discount calculation and validation
+function calculateProductDiscount() {
+  const sellingInput = document.getElementById('prodSellingPrice');
+  const originalInput = document.getElementById('prodOriginalPrice');
+  const feedback = document.getElementById('prodDiscountFeedback');
+  if (!sellingInput || !feedback) return;
+
+  const selling = parseFloat(sellingInput.value) || 0;
+  const original = parseFloat(originalInput?.value) || 0;
+
+  if (original > 0 && original > selling) {
+    const diff = original - selling;
+    const pct = Math.round((diff / original) * 100);
+    feedback.innerHTML = `<span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-arrow-down me-1"></i>৳${diff} ছাড় (${pct}% ডিসকাউন্ট)</span>`;
+  } else if (original > 0 && selling > original) {
+    feedback.innerHTML = `<span class="badge bg-warning-subtle text-danger border border-warning px-2 py-1"><i class="fa-solid fa-triangle-exclamation me-1"></i>সতর্কতা: বিক্রয় মূল্য মূল মূল্যের চেয়ে বেশি!</span>`;
+  } else {
+    feedback.innerHTML = '';
+  }
+}
+
+// Live stock feedback
+function checkStockLevel() {
+  const stockInput = document.getElementById('prodStock');
+  const feedback = document.getElementById('prodStockFeedback');
+  if (!stockInput || !feedback) return;
+
+  const stock = parseInt(stockInput.value) || 0;
+  if (stock <= 10) {
+    feedback.innerHTML = `<span class="badge bg-danger-subtle text-danger border border-danger px-2 py-1"><i class="fa-solid fa-triangle-exclamation me-1"></i>লো স্টক সতর্কতা (১০ বা তার কম)</span>`;
+  } else {
+    feedback.innerHTML = `<span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-check me-1"></i>পর্যাপ্ত স্টক (${stock} টি)</span>`;
+  }
+}
+
+// Helper for clickable suggestion chips (Colors & Sizes)
+function toggleOptionChip(inputId, value) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+
+  let currentValues = input.value.split(',').map(s => s.trim()).filter(Boolean);
+  const existsIndex = currentValues.indexOf(value);
+
+  if (existsIndex > -1) {
+    currentValues.splice(existsIndex, 1);
+  } else {
+    currentValues.push(value);
+  }
+
+  input.value = currentValues.join(', ');
+}
+
+// -------------------- AUTHENTICATION & LOGIN/LOGOUT --------------------
 
 function checkAdminAuth() {
   const isAuth = sessionStorage.getItem('dcb_admin_auth');
@@ -28,7 +234,6 @@ function checkAdminAuth() {
     }
     if (dashboardContent) {
       dashboardContent.classList.remove('d-none');
-      dashboardContent.style.display = 'block';
     }
     loadAdminDashboard();
   } else {
@@ -38,28 +243,35 @@ function checkAdminAuth() {
     }
     if (dashboardContent) {
       dashboardContent.classList.add('d-none');
-      dashboardContent.style.display = 'none';
     }
   }
 }
 
 function handleAdminLogin(e) {
   e.preventDefault();
-  const inputPin = document.getElementById('adminPinInput').value.trim();
-  const storedPin = localStorage.getItem('dcb_admin_pin') || DEFAULT_ADMIN_PASSCODE;
+  const passInput = document.getElementById('adminPasscode');
+  const errorMsg = document.getElementById('adminLoginError');
 
-  if (inputPin === storedPin) {
+  if (!passInput) return;
+
+  if (passInput.value === DEFAULT_ADMIN_PASSCODE) {
     sessionStorage.setItem('dcb_admin_auth', 'true');
+    passInput.value = '';
+    if (errorMsg) errorMsg.classList.add('d-none');
     checkAdminAuth();
-    showAdminToast('এডমিন ড্যাশবোর্ডে স্বাগতম!', 'success');
+    showAdminToast('সফলভাবে অ্যাডমিন পোর্টালে লগইন করেছেন!', 'success');
   } else {
-    document.getElementById('adminLoginError').innerText = 'ভুল পাসওয়ার্ড! অনুগ্রহ করে সঠিক পাসওয়ার্ড প্রদান করুন (Dcbd@2026)';
+    if (errorMsg) errorMsg.classList.remove('d-none');
+    passInput.focus();
   }
 }
 
 function handleAdminLogout() {
-  sessionStorage.removeItem('dcb_admin_auth');
-  checkAdminAuth();
+  if (confirm('আপনি কি নিশ্চিত যে অ্যাডমিন প্যানেল থেকে লগআউট করতে চান?')) {
+    sessionStorage.removeItem('dcb_admin_auth');
+    checkAdminAuth();
+    showAdminToast('লগআউট সম্পন্ন হয়েছে।', 'info');
+  }
 }
 
 function loadAdminDashboard() {
@@ -67,6 +279,8 @@ function loadAdminDashboard() {
   renderAdminOrders();
   renderAdminProducts();
   renderAdminBrands();
+  populateBrandDropdown();
+  populateProductBrandFilterDropdown();
 }
 
 function setupAdminListeners() {
@@ -84,12 +298,28 @@ function setupAdminListeners() {
     });
   }
 
-  const searchProductInput = document.getElementById('adminProductSearch');
+  const prodImagesInput = document.getElementById('prodImages');
+  if (prodImagesInput) prodImagesInput.addEventListener('input', updateImagePreviews);
+
+  // Support both search input IDs
+  const searchProductInput = document.getElementById('adminProductSearchInput') || document.getElementById('adminProductSearch');
   if (searchProductInput) {
-    searchProductInput.addEventListener('input', () => {
-      renderAdminProducts();
+    searchProductInput.addEventListener('input', (e) => {
+      handleProductSearch(e.target.value);
     });
   }
+
+  // Close mobile sidebar on Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      const sidebar = document.getElementById('adminSidebar');
+      const overlay = document.getElementById('sidebarOverlay');
+      if (sidebar && sidebar.classList.contains('show')) {
+        sidebar.classList.remove('show');
+        if (overlay) overlay.classList.remove('show');
+      }
+    }
+  });
 }
 
 // -------------------- STATS & ONCLICK METRIC COUNTER FILTERS --------------------
@@ -97,6 +327,7 @@ function setupAdminListeners() {
 function updateDashboardStats() {
   const orders = JSON.parse(localStorage.getItem('dcb_orders') || '[]');
   const products = JSON.parse(localStorage.getItem('dcb_products') || '[]');
+  const brands = getBrands();
   const visitors = parseInt(localStorage.getItem('dcb_visitors_base') || '1480');
 
   // Orders counts
@@ -120,6 +351,7 @@ function updateDashboardStats() {
 
   // Update DOM Order counters
   setElText('statTotalOrders', totalOrders);
+  setElText('sideOrderCount', totalOrders);
   setElText('statPendingOrders', pendingOrders);
   setElText('statConfirmedOrders', confirmedOrders);
   setElText('statProcessingOrders', processingOrders);
@@ -130,9 +362,15 @@ function updateDashboardStats() {
 
   // Update DOM Product counters
   setElText('statProdTotal', totalProducts);
-  setElText('statProdActive', activeProducts);
-  setElText('statProdInactive', inactiveProducts);
-  setElText('statProdLowStock', lowStockProducts);
+  setElText('statTotalProducts', totalProducts);
+  setElText('sideProdCount', totalProducts);
+  setElText('statActiveProducts', activeProducts);
+  setElText('statInactiveProducts', inactiveProducts);
+  setElText('statLowStockProducts', lowStockProducts);
+
+  // Update DOM Brand counters
+  setElText('sideBrandCount', brands.length);
+  setElText('brandsCountInTable', brands.length);
 
   setElText('statTotalVisitors', visitors.toLocaleString());
 }
@@ -148,49 +386,39 @@ function filterOrdersByStatus(status) {
   const select = document.getElementById('adminOrderStatusFilter');
   if (select) select.value = status;
 
-  // Switch to Orders Tab if not active
-  const ordersTab = document.getElementById('orders-tab');
-  if (ordersTab) {
-    const tab = bootstrap.Tab.getOrCreateInstance(ordersTab);
-    tab.show();
-  }
-
   // Visual card highlight
   document.querySelectorAll('.order-stat-card').forEach(c => c.classList.remove('active-filter'));
   const targetCard = document.getElementById(`orderCard_${status}`);
   if (targetCard) targetCard.classList.add('active-filter');
 
+  const badge = document.getElementById('activeFilterBadge');
+  if (badge) badge.innerText = getStatusNameInBengali(status);
+
   renderAdminOrders();
-  showAdminToast(`অর্ডার ফিল্টার: ${getStatusNameInBengali(status)}`, 'info');
+  showAdminToast(`অর্ডার স্ট্যাটাস ফিল্টার: ${getStatusNameInBengali(status)}`, 'info');
 }
 
 // Filter Products by Clicking Metric Cards (Active, Inactive, Low Stock)
 function filterProductsByMetric(metric) {
   currentAdminProductFilter = metric;
 
-  // Switch to Products Tab if not active
-  const productsTab = document.getElementById('products-tab');
-  if (productsTab) {
-    const tab = bootstrap.Tab.getOrCreateInstance(productsTab);
-    tab.show();
-  }
-
-  // Visual card highlight
   document.querySelectorAll('.product-stat-card').forEach(c => c.classList.remove('active-filter'));
   const targetCard = document.getElementById(`prodCard_${metric}`);
   if (targetCard) targetCard.classList.add('active-filter');
+
+  const badge = document.getElementById('activeProductFilterBadge');
+  if (badge) badge.innerText = getMetricNameInBengali(metric);
 
   renderAdminProducts();
   showAdminToast(`পণ্য ফিল্টার: ${getMetricNameInBengali(metric)}`, 'info');
 }
 
-function getMetricNameInBengali(m) {
-  switch (m) {
-    case 'all': return 'সব পণ্য';
-    case 'active': return 'সক্রিয় পণ্য';
-    case 'inactive': return 'নিষ্ক্রিয় পণ্য';
-    case 'low_stock': return 'লো স্টক পণ্য (≤ ১০)';
-    default: return m;
+function getMetricNameInBengali(metric) {
+  switch (metric) {
+    case 'active': return 'সক্রিয় পণ্য (স্টোরে দৃশ্যমান)';
+    case 'inactive': return 'ডি-একটিভ পণ্য (স্টোরে লুকানো)';
+    case 'low_stock': return 'লো স্টক পণ্য (১০ বা কম)';
+    default: return 'সকল পণ্য';
   }
 }
 
@@ -667,17 +895,87 @@ function exportOrdersCSV() {
   showAdminToast('অর্ডার ডাটা CSV ফরম্যাটে ডাউনলোড হয়েছে!', 'success');
 }
 
-// -------------------- PRODUCT MANAGEMENT (Active/Deactive, Low Stock, CRUD) --------------------
+// -------------------- PRODUCT MANAGEMENT (Active/Deactive, Low Stock, Brand Filter, CRUD) --------------------
+
+// Populate Brand Filter Dropdown in Product Management toolbar
+function populateProductBrandFilterDropdown() {
+  const filterSelect = document.getElementById('adminProductBrandFilter');
+  if (!filterSelect) return;
+
+  const brands = getBrands();
+  const products = JSON.parse(localStorage.getItem('dcb_products') || '[]');
+
+  let html = `<option value="all">সকল ব্র্যান্ড (সব পণ্য - ${products.length}টি)</option>`;
+  
+  brands.forEach(b => {
+    const count = products.filter(p => p.brand === b.name || p.brand === b.bangla_name).length;
+    const isSel = (currentAdminBrandFilter === b.name || currentAdminBrandFilter === b.bangla_name) ? 'selected' : '';
+    html += `<option value="${b.name}" ${isSel}>${b.name} (${b.bangla_name || b.name}) - ${count}টি</option>`;
+  });
+
+  const noBrandCount = products.filter(p => !p.brand || p.brand.trim() === '').length;
+  if (noBrandCount > 0) {
+    const isSel = (currentAdminBrandFilter === '__no_brand__') ? 'selected' : '';
+    html += `<option value="__no_brand__" ${isSel}>ব্র্যান্ড ছাড়া পণ্য (${noBrandCount}টি)</option>`;
+  }
+
+  filterSelect.innerHTML = html;
+  renderProductActiveFilterChips();
+}
+
+// Handle Brand filter change in product table
+function handleProductBrandFilterChange(brandName) {
+  currentAdminBrandFilter = brandName;
+  renderProductActiveFilterChips();
+  renderAdminProducts();
+  if (brandName !== 'all') {
+    showAdminToast(`ব্র্যান্ড ফিল্টার: ${brandName === '__no_brand__' ? 'ব্র্যান্ড ছাড়া পণ্য' : brandName}`, 'info');
+  }
+}
+
+// Clear brand filter
+function clearProductBrandFilter() {
+  currentAdminBrandFilter = 'all';
+  const filterSelect = document.getElementById('adminProductBrandFilter');
+  if (filterSelect) filterSelect.value = 'all';
+  renderProductActiveFilterChips();
+  renderAdminProducts();
+}
+
+// Render active filter chips bar in product management
+function renderProductActiveFilterChips() {
+  const container = document.getElementById('adminProductActiveFiltersBar');
+  if (!container) return;
+
+  if (currentAdminBrandFilter && currentAdminBrandFilter !== 'all') {
+    const label = currentAdminBrandFilter === '__no_brand__' ? 'ব্র্যান্ড ছাড়া' : currentAdminBrandFilter;
+    container.innerHTML = `
+      <span class="badge bg-warning-subtle text-dark border border-warning px-3 py-2 rounded-pill d-inline-flex align-items-center gap-1">
+        <i class="fa-solid fa-tag text-warning"></i> ব্র্যান্ড: <strong>${label}</strong>
+        <button type="button" class="btn-close ms-1" style="font-size: 10px;" onclick="clearProductBrandFilter()" aria-label="রিসেট"></button>
+      </span>
+    `;
+  } else {
+    container.innerHTML = '';
+  }
+}
+
+// Live search for products
+function handleProductSearch(val) {
+  currentAdminProductSearch = (val || '').toLowerCase().trim();
+  renderAdminProducts();
+}
 
 function renderAdminProducts() {
   const tbody = document.getElementById('adminProductsTableBody');
   if (!tbody) return;
 
   let products = JSON.parse(localStorage.getItem('dcb_products') || '[]');
-  const searchTerm = (document.getElementById('adminProductSearch')?.value || '').toLowerCase().trim();
+  const searchTerm = currentAdminProductSearch;
   const metricFilter = currentAdminProductFilter;
+  const brandFilter = currentAdminBrandFilter;
 
-  // Filter based on selected metric counter card
+  // 1. Metric filter
   if (metricFilter === 'active') {
     products = products.filter(p => p.status !== 'inactive');
   } else if (metricFilter === 'inactive') {
@@ -686,61 +984,79 @@ function renderAdminProducts() {
     products = products.filter(p => (p.stock || 0) <= 10);
   }
 
+  // 2. Brand filter
+  if (brandFilter && brandFilter !== 'all') {
+    if (brandFilter === '__no_brand__') {
+      products = products.filter(p => !p.brand || p.brand.trim() === '');
+    } else {
+      products = products.filter(p => p.brand === brandFilter || (p.brand && p.brand.toLowerCase() === brandFilter.toLowerCase()));
+    }
+  }
+
+  // 3. Search query (matches name, english name, category, and brand)
   if (searchTerm) {
     products = products.filter(p => 
-      p.name.toLowerCase().includes(searchTerm) || 
+      (p.name && p.name.toLowerCase().includes(searchTerm)) || 
       (p.category && p.category.toLowerCase().includes(searchTerm)) ||
-      (p.english_name && p.english_name.toLowerCase().includes(searchTerm))
+      (p.english_name && p.english_name.toLowerCase().includes(searchTerm)) ||
+      (p.brand && p.brand.toLowerCase().includes(searchTerm))
     );
   }
 
   if (products.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="7" class="text-center py-4 text-muted">কোনো পণ্য পাওয়া যায়নি (${getMetricNameInBengali(metricFilter)})</td>
+        <td colspan="7" class="text-center py-5 text-muted">
+          <i class="fa-solid fa-boxes-stacked fa-2x mb-2 text-secondary"></i><br>
+          কোনো পণ্য পাওয়া যায়নি (${getMetricNameInBengali(metricFilter)} ${brandFilter !== 'all' ? `| ব্র্যান্ড: ${brandFilter}` : ''})
+        </td>
       </tr>
     `;
     return;
   }
 
   tbody.innerHTML = products.map(p => {
-    const mainImg = (p.images && p.images.length > 0) ? p.images[0] : '';
-    const imgCount = p.images ? p.images.length : 0;
+    const mainImg = (p.images && p.images.length > 0) ? p.images[0] : 'https://images.unsplash.com/photo-1586075010923-2dd4570fb338?w=700&auto=format&fit=crop&q=80';
     const isActive = p.status !== 'inactive';
     const isLowStock = (p.stock || 0) <= 10;
+    const brandBadge = p.brand ? `<span class="badge bg-warning-subtle text-dark border border-warning"><i class="fa-solid fa-tag me-1"></i>${p.brand}</span>` : `<small class="text-muted fst-italic">ব্র্যান্ড ছাড়া</small>`;
 
     return `
       <tr class="${!isActive ? 'table-secondary opacity-75' : ''}">
         <td>
-          <img src="${mainImg}" alt="${p.name}" style="width: 48px; height: 48px; object-fit: cover; border-radius: 6px;">
+          <img src="${mainImg}" alt="${p.name}" style="width: 52px; height: 52px; object-fit: cover; border-radius: 8px; border: 1px solid #e2e8f0;">
         </td>
         <td>
-          <div class="fw-bold">${p.name}</div>
+          <div class="fw-bold text-dark">${p.name}</div>
           <small class="text-muted">${p.english_name || ''}</small>
-          ${isLowStock ? '<span class="badge bg-danger ms-1 small">লো স্টক!</span>' : ''}
+          ${p.badge ? `<span class="badge bg-danger ms-1" style="font-size: 10px;">${p.badge}</span>` : ''}
+          ${isLowStock ? '<span class="badge bg-danger ms-1" style="font-size: 10px;"><i class="fa-solid fa-triangle-exclamation me-1"></i>লো স্টক</span>' : ''}
         </td>
-        <td><span class="badge bg-light text-dark border">${p.category || 'অফিস'}</span></td>
         <td>
-          <span class="fw-bold text-primary">৳${p.price}</span>
+          <span class="badge bg-light text-dark border d-block mb-1 text-truncate" style="max-width: 140px;">${p.category || 'ফাইল ও ফোল্ডার'}</span>
+          ${brandBadge}
+        </td>
+        <td>
+          <span class="fw-bold text-primary fs-6">৳${p.price}</span>
           ${p.original_price ? `<br><small class="text-muted text-decoration-line-through">৳${p.original_price}</small>` : ''}
         </td>
         <td>
-          <span class="badge ${p.stock > 10 ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger'} border">
-            ${p.stock} পিস
+          <span class="badge ${p.stock > 10 ? 'bg-success-subtle text-success border-success' : 'bg-danger-subtle text-danger border-danger'} border px-2 py-1">
+            ${p.stock} টি
           </span>
         </td>
         <td>
           <!-- Active / Deactive Toggle Button -->
-          <button class="btn btn-sm ${isActive ? 'btn-success' : 'btn-outline-secondary'}" onclick="toggleProductActiveStatus(${p.id})">
-            ${isActive ? '<i class="fa-solid fa-circle-check me-1"></i> সক্রিয় (Active)' : '<i class="fa-solid fa-circle-xmark me-1"></i> নিষ্ক্রিয় (Inactive)'}
+          <button class="btn btn-sm ${isActive ? 'btn-success' : 'btn-outline-secondary'} rounded-pill shadow-sm" onclick="toggleProductActiveStatus(${p.id})" title="ক্লিক করে স্ট্যাটাস পরিবর্তন করুন">
+            ${isActive ? '<i class="fa-solid fa-circle-check me-1"></i> সক্রিয়' : '<i class="fa-solid fa-circle-xmark me-1"></i> নিষ্ক্রিয়'}
           </button>
         </td>
-        <td>
+        <td class="text-end">
           <div class="btn-group btn-group-sm">
-            <button class="btn btn-outline-primary" title="সম্পাদনা করুন" onclick="openEditProductModal(${p.id})">
+            <button class="btn btn-outline-primary rounded-start-pill" title="পণ্য সম্পাদনা করুন" onclick="openEditProductModal(${p.id})">
               <i class="fa-solid fa-pen-to-square"></i>
             </button>
-            <button class="btn btn-outline-danger" title="মুছে ফেলুন" onclick="deleteProduct(${p.id})">
+            <button class="btn btn-outline-danger rounded-end-pill" title="পণ্যটি মুছে ফেলুন" onclick="deleteProduct(${p.id})">
               <i class="fa-solid fa-trash"></i>
             </button>
           </div>
@@ -764,25 +1080,38 @@ function toggleProductActiveStatus(productId) {
   }
 }
 
+// Open Add Product Modal with cleanly initialized fields
 function openAddProductModal() {
-  document.getElementById('productFormModalTitle').innerText = 'নতুন পণ্য যুক্ত করুন';
+  document.getElementById('productFormModalTitle').innerHTML = '<i class="fa-solid fa-plus-circle me-1 text-primary"></i> নতুন পণ্য যোগ করুন';
+  const subtitle = document.getElementById('productFormModalSubtitle');
+  if (subtitle) subtitle.innerText = 'পণ্যের নাম, ব্র্যান্ড, মূল্য, স্টক ও ছবি সঠিকভাবে পূরণ করুন';
+
   document.getElementById('adminProductForm').reset();
   document.getElementById('editProductId').value = '';
   document.getElementById('prodStatus').value = 'active';
+  document.getElementById('prodStock').value = 50;
+
   populateBrandDropdown('');
+  updateImagePreviews();
+  calculateProductDiscount();
+  checkStockLevel();
 
   const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('adminProductFormModal'));
   modal.show();
 }
 
+// Open Edit Product Modal with complete prefilled fields and image gallery
 function openEditProductModal(productId) {
   const products = JSON.parse(localStorage.getItem('dcb_products') || '[]');
   const product = products.find(p => p.id === productId);
   if (!product) return;
 
-  document.getElementById('productFormModalTitle').innerText = 'পণ্য সম্পাদনা করুন';
+  document.getElementById('productFormModalTitle').innerHTML = `<i class="fa-solid fa-pen-to-square me-1 text-primary"></i> পণ্য সম্পাদনা: ${product.name} <span class="badge bg-secondary ms-1 fs-6">#${product.id}</span>`;
+  const subtitle = document.getElementById('productFormModalSubtitle');
+  if (subtitle) subtitle.innerText = 'পণ্যের তথ্য, মূল্য, ব্র্যান্ড, স্টক ও গ্যালারির ছবি পরিবর্তন করুন';
+
   document.getElementById('editProductId').value = product.id;
-  document.getElementById('prodName').value = product.name;
+  document.getElementById('prodName').value = product.name || '';
   document.getElementById('prodEnglishName').value = product.english_name || '';
   document.getElementById('prodCategory').value = product.category || 'ফাইল ও ফোল্ডার';
   document.getElementById('prodSellingPrice').value = product.price || 0;
@@ -792,14 +1121,21 @@ function openEditProductModal(productId) {
   document.getElementById('prodSizes').value = (product.sizes || []).join(', ');
   document.getElementById('prodBadge').value = product.badge || '';
   document.getElementById('prodStatus').value = product.status || 'active';
-  populateBrandDropdown(product.brand || '');
   document.getElementById('prodDescription').value = product.description || '';
+
+  // Crucial fix: set prodImages BEFORE calling updateImagePreviews()
   document.getElementById('prodImages').value = (product.images || []).join('\n');
+  updateImagePreviews();
+
+  populateBrandDropdown(product.brand || '');
+  calculateProductDiscount();
+  checkStockLevel();
 
   const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('adminProductFormModal'));
   modal.show();
 }
 
+// Handle Product Add / Edit Submission with BRAND SAVED PROPERLY
 function handleProductFormSubmit(e) {
   e.preventDefault();
 
@@ -831,6 +1167,7 @@ function handleProductFormSubmit(e) {
   let products = JSON.parse(localStorage.getItem('dcb_products') || '[]');
 
   if (idVal) {
+    // Edit existing product
     const id = parseInt(idVal);
     const idx = products.findIndex(p => p.id === id);
     if (idx > -1) {
@@ -839,6 +1176,7 @@ function handleProductFormSubmit(e) {
         name,
         english_name: englishName,
         category,
+        brand, // Crucial fix: brand saved on update!
         price: sellingPrice,
         original_price: originalPrice,
         stock,
@@ -849,15 +1187,17 @@ function handleProductFormSubmit(e) {
         description,
         images
       };
-      showAdminToast('পণ্যটি সফলভাবে আপডেট করা হয়েছে!', 'success');
+      showAdminToast(`'${name}' পণ্যটি সফলভাবে আপডেট করা হয়েছে!`, 'success');
     }
   } else {
-    const newId = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
+    // Add new product
+    const newId = products.length > 0 ? Math.max(...products.map(p => p.id || 0)) + 1 : 1;
     const newProduct = {
       id: newId,
       name,
       english_name: englishName,
       category,
+      brand, // Crucial fix: brand saved on create!
       price: sellingPrice,
       original_price: originalPrice,
       stock,
@@ -871,12 +1211,14 @@ function handleProductFormSubmit(e) {
       images
     };
     products.unshift(newProduct);
-    showAdminToast('নতুন পণ্য স্টোরে যুক্ত করা হয়েছে!', 'success');
+    showAdminToast(`'${name}' নতুন পণ্য সফলভাবে স্টোরে যুক্ত হয়েছে!`, 'success');
   }
 
   localStorage.setItem('dcb_products', JSON.stringify(products));
   updateDashboardStats();
+  populateProductBrandFilterDropdown();
   renderAdminProducts();
+  renderAdminBrands();
 
   const modalEl = document.getElementById('adminProductFormModal');
   const modal = bootstrap.Modal.getInstance(modalEl);
@@ -891,8 +1233,10 @@ function deleteProduct(productId) {
   localStorage.setItem('dcb_products', JSON.stringify(products));
 
   updateDashboardStats();
+  populateProductBrandFilterDropdown();
   renderAdminProducts();
-  showAdminToast('পণ্যটি মুছে ফেলা হয়েছে!', 'warning');
+  renderAdminBrands();
+  showAdminToast('পণ্যটি সফলভাবে মুছে ফেলা হয়েছে!', 'warning');
 }
 
 function resetDefaultProducts() {
@@ -900,7 +1244,9 @@ function resetDefaultProducts() {
   if (typeof DEFAULT_PRODUCTS !== 'undefined') {
     localStorage.setItem('dcb_products', JSON.stringify(DEFAULT_PRODUCTS));
     updateDashboardStats();
+    populateProductBrandFilterDropdown();
     renderAdminProducts();
+    renderAdminBrands();
     showAdminToast('ডিফল্ট পণ্য সফলভাবে রিস্টোর হয়েছে!', 'success');
   }
 }
@@ -912,13 +1258,12 @@ function showAdminToast(message, type = 'primary') {
 
   toastBody.innerText = message;
   toastEl.className = `toast align-items-center text-bg-${type} border-0`;
-  const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
+  const toast = new bootstrap.Toast(toastEl, { delay: 3500 });
   toast.show();
 }
 
 
-// ==================== BRAND MANAGEMENT LOGIC ====================
-let currentBrandSearch = '';
+// ==================== BRAND MANAGEMENT LOGIC (CRUD & FILTERS) ====================
 
 function getBrands() {
   let brands = JSON.parse(localStorage.getItem('dcb_brands') || 'null');
@@ -949,36 +1294,82 @@ function handleBrandSearch(val) {
   renderAdminBrands();
 }
 
+// Filter brands by type: all, with_products, without_products
+function filterBrandsByType(type) {
+  currentBrandFilterType = type;
+  document.querySelectorAll('.brand-filter-btn').forEach(btn => btn.classList.remove('active'));
+  const activeBtn = document.getElementById(`brandFilter_${type}`);
+  if (activeBtn) activeBtn.classList.add('active');
+  renderAdminBrands();
+}
+
+// Switch to products pane and filter by the selected brand
+function viewProductsByBrand(brandName) {
+  const prodBtn = document.getElementById('sideNav_products');
+  switchAdminPane('productsPane', prodBtn);
+
+  currentAdminBrandFilter = brandName;
+  const filterSelect = document.getElementById('adminProductBrandFilter');
+  if (filterSelect) filterSelect.value = brandName;
+  renderProductActiveFilterChips();
+  renderAdminProducts();
+  showAdminToast(`'${brandName}' ব্র্যান্ডের পণ্য ফিল্টার করা হয়েছে`, 'info');
+}
+
 function renderAdminBrands() {
   const brands = getBrands();
   const products = JSON.parse(localStorage.getItem('dcb_products') || '[]');
   const tbody = document.getElementById('adminBrandsTableBody');
   if (!tbody) return;
 
-  const filtered = brands.filter(b => {
+  let filtered = brands.filter(b => {
     if (!currentBrandSearch) return true;
     return (b.name && b.name.toLowerCase().includes(currentBrandSearch)) ||
            (b.bangla_name && b.bangla_name.toLowerCase().includes(currentBrandSearch)) ||
            (b.description && b.description.toLowerCase().includes(currentBrandSearch));
   });
 
+  // Filter by products attached
+  if (currentBrandFilterType === 'with_products') {
+    filtered = filtered.filter(b => {
+      const count = products.filter(p => p.brand === b.name || p.brand === b.bangla_name).length;
+      return count > 0;
+    });
+  } else if (currentBrandFilterType === 'without_products') {
+    filtered = filtered.filter(b => {
+      const count = products.filter(p => p.brand === b.name || p.brand === b.bangla_name).length;
+      return count === 0;
+    });
+  }
+
+  // Update brand counter elements
+  setElText('brandsCountInTable', filtered.length);
+  setElText('sideBrandCount', brands.length);
+
   if (filtered.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-muted"><i class="fa-solid fa-tags fa-2x mb-2 text-secondary"></i><br>কোনো ব্র্যান্ড পাওয়া যায়নি।</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" class="text-center py-5 text-muted"><i class="fa-solid fa-tags fa-2x mb-2 text-secondary"></i><br>কোনো ব্র্যান্ড পাওয়া যায়নি।</td></tr>`;
     return;
   }
 
   tbody.innerHTML = filtered.map(b => {
     const prodCount = products.filter(p => p.brand === b.name || p.brand === b.bangla_name).length;
-    const logoImg = b.logo ? `<img src="${b.logo}" alt="${b.name}" style="width: 44px; height: 44px; object-fit: contain; border-radius: 8px; background: #fff; border: 1px solid #e2e8f0; padding: 2px;">` : `<div style="width: 44px; height: 44px; border-radius: 8px; background: #f8fafc; color: #64748b; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 1px dashed #cbd5e1;"><i class="fa-solid fa-tag text-warning"></i></div>`;
+    const logoImg = b.logo ? `<img src="${b.logo}" alt="${b.name}" style="width: 44px; height: 44px; object-fit: contain; border-radius: 8px; background: #fff; border: 1px solid #e2e8f0; padding: 2px;" onerror="this.src='https://via.placeholder.com/44?text=Brand'">` : `<div style="width: 44px; height: 44px; border-radius: 8px; background: #f8fafc; color: #64748b; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 1px dashed #cbd5e1;"><i class="fa-solid fa-tag text-warning"></i></div>`;
 
     return `
       <tr>
         <td>${logoImg}</td>
-        <td><strong class="text-dark">${b.name}</strong></td>
+        <td><strong class="text-dark fs-6">${b.name}</strong></td>
         <td><span class="badge bg-light text-dark border">${b.bangla_name || '-'}</span></td>
         <td><small class="text-muted">${b.description || 'কোনো বিবরণ নেই'}</small></td>
-        <td><span class="badge bg-warning-subtle text-dark border border-warning px-2 py-1"><i class="fa-solid fa-boxes-stacked me-1"></i>${prodCount} টি পণ্য</span></td>
+        <td>
+          <span class="badge bg-warning-subtle text-dark border border-warning px-2 py-1">
+            <i class="fa-solid fa-boxes-stacked me-1"></i>${prodCount} টি পণ্য
+          </span>
+        </td>
         <td class="text-end">
+          <button class="btn btn-sm btn-outline-info rounded-pill me-1" onclick="viewProductsByBrand('${b.name}')" title="এই ব্র্যান্ডের পণ্যগুলো দেখুন">
+            <i class="fa-solid fa-boxes-stacked me-1"></i>পণ্য দেখুন
+          </button>
           <button class="btn btn-sm btn-outline-primary rounded-pill me-1" onclick="openEditBrandModal(${b.id})" title="সম্পাদনা">
             <i class="fa-solid fa-pen-to-square"></i>
           </button>
@@ -1007,6 +1398,7 @@ function openAddBrandModal() {
   document.getElementById('brandModalTitle').innerText = 'নতুন ব্র্যান্ড যোগ করুন';
   document.getElementById('adminBrandForm').reset();
   document.getElementById('editBrandId').value = '';
+  updateBrandLogoPreview();
   const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('adminBrandModal'));
   modal.show();
 }
@@ -1022,9 +1414,45 @@ function openEditBrandModal(id) {
   document.getElementById('brandBanglaName').value = b.bangla_name || '';
   document.getElementById('brandLogo').value = b.logo || '';
   document.getElementById('brandDescription').value = b.description || '';
+  updateBrandLogoPreview();
 
   const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('adminBrandModal'));
   modal.show();
+}
+
+// Handle direct logo file upload from device using FileReader
+function handleBrandLogoUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const logoInput = document.getElementById('brandLogo');
+    if (logoInput) {
+      logoInput.value = e.target.result;
+      updateBrandLogoPreview();
+      showAdminToast('লোগো ফাইল আপলোড সম্পন্ন হয়েছে!', 'success');
+    }
+  };
+  reader.readAsDataURL(file);
+  event.target.value = '';
+}
+
+// Update live logo preview inside Brand Modal
+function updateBrandLogoPreview() {
+  const container = document.getElementById('brandLogoPreviewContainer');
+  const input = document.getElementById('brandLogo');
+  if (!container) return;
+
+  const val = input ? input.value.trim() : '';
+  if (val) {
+    container.innerHTML = `
+      <img src="${val}" alt="লোগো প্রিভিউ" style="width: 44px; height: 44px; object-fit: contain; border-radius: 8px; border: 1px solid #cbd5e1; background: #fff;" onerror="this.src='https://via.placeholder.com/44?text=Error'">
+      <div class="small text-muted">লোগো প্রিভিউ প্রদর্শিত হচ্ছে</div>
+    `;
+  } else {
+    container.innerHTML = `<span class="text-muted small m-auto">লোগো লিংক দিলে বা আপলোড করলে এখানে প্রিভিউ দেখা যাবে</span>`;
+  }
 }
 
 function handleBrandFormSubmit(e) {
@@ -1044,11 +1472,22 @@ function handleBrandFormSubmit(e) {
   if (idVal) {
     const idx = brands.findIndex(b => b.id == idVal);
     if (idx !== -1) {
+      const oldName = brands[idx].name;
       brands[idx].name = name;
       brands[idx].bangla_name = bangla_name;
       brands[idx].logo = logo;
       brands[idx].description = description;
-      showAdminToast('ব্র্যান্ড তথ্য আপডেট করা হয়েছে!', 'success');
+
+      // Update associated products if brand name changed
+      if (oldName !== name) {
+        let products = JSON.parse(localStorage.getItem('dcb_products') || '[]');
+        products.forEach(p => {
+          if (p.brand === oldName) p.brand = name;
+        });
+        localStorage.setItem('dcb_products', JSON.stringify(products));
+      }
+
+      showAdminToast(`'${name}' ব্র্যান্ড তথ্য আপডেট করা হয়েছে!`, 'success');
     }
   } else {
     const newId = brands.length > 0 ? Math.max(...brands.map(b => b.id || 0)) + 1 : 1;
@@ -1059,12 +1498,14 @@ function handleBrandFormSubmit(e) {
       logo,
       description
     });
-    showAdminToast('নতুন ব্র্যান্ড যুক্ত হয়েছে!', 'success');
+    showAdminToast(`'${name}' নতুন ব্র্যান্ড সফলভাবে যুক্ত হয়েছে!`, 'success');
   }
 
   saveBrands(brands);
   renderAdminBrands();
   populateBrandDropdown();
+  populateProductBrandFilterDropdown();
+  renderAdminProducts();
   updateDashboardStats();
 
   const modal = bootstrap.Modal.getInstance(document.getElementById('adminBrandModal'));
@@ -1072,12 +1513,37 @@ function handleBrandFormSubmit(e) {
 }
 
 function deleteBrand(id) {
-  if (!confirm('আপনি কি নিশ্চিত যে এই ব্র্যান্ডটি মুছে ফেলতে চান?')) return;
-  let brands = getBrands();
-  brands = brands.filter(b => b.id != id);
-  saveBrands(brands);
+  const brands = getBrands();
+  const brandToDelete = brands.find(b => b.id == id);
+  if (!brandToDelete) return;
+
+  const products = JSON.parse(localStorage.getItem('dcb_products') || '[]');
+  const count = products.filter(p => p.brand === brandToDelete.name || p.brand === brandToDelete.bangla_name).length;
+
+  let msg = `আপনি কি নিশ্চিত যে '${brandToDelete.name}' ব্র্যান্ডটি মুছে ফেলতে চান?`;
+  if (count > 0) {
+    msg += `\nসতর্কতা: এই ব্র্যান্ডের সাথে ${count}টি পণ্য সংযুক্ত আছে। ডিলিট করলে পণ্যগুলোর ব্র্যান্ড ফিল্ড খালি হয়ে যাবে।`;
+  }
+
+  if (!confirm(msg)) return;
+
+  let updatedBrands = brands.filter(b => b.id != id);
+  saveBrands(updatedBrands);
+
+  // Clear brand from linked products
+  if (count > 0) {
+    products.forEach(p => {
+      if (p.brand === brandToDelete.name || p.brand === brandToDelete.bangla_name) {
+        p.brand = '';
+      }
+    });
+    localStorage.setItem('dcb_products', JSON.stringify(products));
+  }
+
   renderAdminBrands();
   populateBrandDropdown();
+  populateProductBrandFilterDropdown();
+  renderAdminProducts();
   updateDashboardStats();
-  showAdminToast('ব্র্যান্ড মুছে ফেলা হয়েছে!', 'info');
+  showAdminToast(`'${brandToDelete.name}' ব্র্যান্ড মুছে ফেলা হয়েছে!`, 'info');
 }
