@@ -584,9 +584,15 @@
           <label class="form-label small fw-semibold text-secondary">অ্যাডমিন পাসওয়ার্ড লিখুন:</label>
           <div class="input-group">
             <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-lock text-muted"></i></span>
-            <input type="password" id="adminPasswordInput" class="form-control border-start-0" placeholder="পাসওয়ার্ড দিন..." required autocomplete="current-password">
+            <input type="password" id="adminPasswordInput" class="form-control border-start-0 border-end-0" placeholder="পাসওয়ার্ড দিন (যেমন: Dcbd@2026)" required autocomplete="current-password">
+            <button type="button" class="btn btn-outline-secondary border-start-0 bg-white" id="togglePasswordBtn" onclick="toggleAdminPasswordVisibility()" title="পাসওয়ার্ড দেখুন/লুকান">
+              <i class="fa-solid fa-eye text-muted" id="togglePasswordIcon"></i>
+            </button>
           </div>
-          <div id="adminLoginError" class="text-danger small mt-2 fw-semibold"></div>
+          <div id="adminLoginError" class="mt-2 d-none"></div>
+          <div class="form-text small text-muted mt-2">
+            <i class="fa-solid fa-circle-info me-1 text-primary"></i>ডিফল্ট পাসওয়ার্ড: <code class="user-select-all fw-bold text-primary">Dcbd@2026</code>
+          </div>
         </div>
 
         <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold rounded-pill shadow-sm">
